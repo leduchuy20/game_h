@@ -100,6 +100,15 @@ Các game loại dần người chơi (Truyền Bom, Chim Bay, Né Laser, Gạch
 | 🧋 **Pha Trà Sữa** | Đơn hiện vài giây rồi ẩn — nhớ đơn, lấy đúng topping (Đánh ở trạm), giao ở quầy. Giao đúng +2, cộng tip theo thời gian còn lại, giao đầu tiên +1; trễ đơn −1. |
 | 🚣 **Thuyền Chèo** | Đội 2 người: mỗi người 1 mái chèo, chèo cùng lúc thì lao vọt, 1 bên thì rẽ. Đội 1 người: Đánh/Nhảy = 2 mái. Né đá. |
 | ⚾ **Bóng Chày** | Bấm Đánh đúng lúc bóng chạm vạch trắng (Home run +3). Có bóng chậm, bóng đổi tốc và bóng bom (đánh trúng −2). Chế độ **Người ném**: đổi vai mỗi cú ném — người ném chọn loại bóng (↑↓) và đường ném (←→: Thẳng / Khựng / Tăng tốc), bóng ngụy trang tới giữa đường mới lộ là bom. Người đánh trượt thì người ném +1, đánh trúng bom thì người ném +2. |
+| 🤝 **Chia Hay Cướp** | Đứng trên rương giữ Đánh để mở một mình (ít tiền). Hai người cùng chạm một rương → vài giây bí mật chọn: Đánh = 🤝 Chia, Nhảy = 🗡️ Cướp (đổi ý thoải mái, chỉ tính lần bấm cuối, màn hình không lộ). Cùng chia +50 mỗi người · một người cướp +100 · cùng cướp −30 cả hai. Rương vàng ×2. Ngoài lúc đấu trí, Nhảy = lao húc người đang mở rương. |
+| 🔢 **Đếm Tròn** | Một đoàn Tròn đủ màu, đội vương miện / mũ / đeo kính chạy qua, rồi mới hỏi (vd "bao nhiêu Tròn ĐỎ đội VƯƠNG MIỆN?"). Đánh +1, Nhảy −1, bấm Xuống để chốt. Gần đúng nhất +2, đúng tuyệt đối +1, chốt đúng sớm nhất +1. |
+| ⛏️ **Đào Kho Báu** | Vòng radar dưới chân nháy càng nhanh, càng đỏ khi gần rương chôn. Giữ Đánh để đào ô đang đứng; trúng rương thì giữ Đánh thêm để mở. Ô có vết nứt có thể có mìn — đào trúng hoặc bị húc văng vào là nổ, mất tiền. Nhảy = lao húc để cướp rương. |
+| 🪃 **Vua Boomerang** | Giữ Đánh lấy đà, thả ra ném boomerang — lượn rồi tự bay về tay; vướng tường thì rơi, phải chạy nhặt. Nhảy = lướt chém gần. Nấp trong bụi cỏ gần như vô hình. Còn người cuối cùng (hoặc nhiều tim nhất) thắng. |
+| 🪢 **Dây Thun** | 2 đội trên cây cầu nổi, đồng đội nối nhau bằng dây thun. Kéo căng dây quét ngang gạt đội kia rơi xuống nước (+1 điểm). Chạm Nhảy = nhảy qua khúc gỗ / qua dây, giữ Nhảy = mỏ neo (giữ được đồng đội đang rơi). Đánh = lao húc. Đội 1 người không có dây nhưng nặng hơn. |
+| 💥 **Đại Bác Công Thành** | Hai thành hai bên sông. Giữ Đánh để tăng tầm (vòng ngắm chạy sang bờ kia), thả ra để bắn. Tường gạch chặn đạn ở hàng đó — phá thủng rồi mới bắn trúng người phía sau. Vòng đỏ = chỗ đạn sắp rơi, Nhảy (kèm hướng) để lướt né. Theo hiệp; 3–4 người chia đội. |
+| ⌨️ **Bấm Nhanh Ký Tự** | Mỗi người một băng chuyền "từ" gồm 3–5 ký hiệu (↑ ↓ ← → ● = Đánh, ▲ = Nhảy). Gõ đúng hết một từ thì chạy lên một bậc; bấm sai bị khựng, gõ lại từ đầu. Từ viền ⚡ bắn sét đẩy người dẫn đầu lùi một bậc. Về đích trước thắng. |
+| ✏️ **Vẽ Theo Khuôn** | Hình mẫu hiện vài giây rồi ẩn; vẽ lại trên bảng của mình: giữ Đánh để tô, giữ Nhảy để tẩy. Chấm % khớp (tô thừa cũng bị trừ), cộng qua các hình. |
+| 🚚 **Chuyển Đồ Điên Loạn** *(co-op)* | Cả nhóm chuyển đồ trong nhà lên xe tải bên kia sông. Giữ Đánh để khiêng, chạm Nhảy để quăng. Đồ lớn 👥 cần 2 người cùng giữ Đánh (một mình chỉ kéo lê), hai người cùng bấm Nhảy để quăng qua sông. Quăng hụt rơi xuống sông là mất! |
 | 🎉 **Chơi tiệc** | 3 / 5 / 8 game ngẫu nhiên liên tiếp, tự bật/tắt từng game được bốc (nhớ lựa chọn), cộng điểm (hạng 1 được nhiều điểm nhất). Giữa các game có 🎡 vòng quay sự kiện (điểm ×2, tua nhanh, chia điểm, người bét chọn game...). Ở màn giới thiệu bấm nút Xuống để 🎲 cược 1 điểm: nhất +2, bét mất cược. Bật **🎲 Bàn cờ** ở màn chọn tiệc: sau mỗi game mọi người đi trên bàn 25 ô, về càng cao xúc xắc càng to (nhất 3–6, bét 1–3); ô 🪙 +1, ⭐ +3, 🏁 đi qua +3, 🦹 cướp 2 điểm của người dẫn đầu, ⏪ lùi 3 ô, 🛒 trả 3 điểm mua bùa 🔄 đảo phím người dẫn đầu ở game sau. Hết tiệc mà hòa điểm cao nhất → **⚔️ hiệp phụ quyết tử**: chỉ những người hòa đấu 1 ván Sumo trên lõi sàn hoặc Đấu Kiếm 1 chạm, ai thắng +1 điểm. |
 
 **Đấu Sumo & Lăn Tuyết — điều khiển và chế độ**
@@ -124,7 +133,7 @@ Các game loại dần người chơi (Truyền Bom, Chim Bay, Né Laser, Gạch
 - **Sàn bập bênh** ⚖️: mọi người dồn về phía nào thì sàn nghiêng, ai cũng trượt về phía đó.
 - Cú húc quyết định (người cuối rơi) được chiếu chậm và phóng to; cú húc tích đầy lực có khựng hình nhẹ.
 
-**Game đồng đội** (Bóng Đá, Kéo Co, Xe Tăng – Cướp cờ, Đấu Kiếm – Tiến quân, Sumo – Đồng đội): 2 người đấu 1–1, 3 người đấu 2–1, 4 người đấu 2–2. P1 và P3 ở Đội Trái, P2 và P4 ở Đội Phải. Muốn đổi đội thì đổi chỗ trong sảnh.
+**Game đồng đội** (Bóng Đá, Kéo Co, Dây Thun, Đại Bác Công Thành, Xe Tăng – Cướp cờ, Đấu Kiếm – Tiến quân, Sumo – Đồng đội): 2 người đấu 1–1, 3 người đấu 2–1, 4 người đấu 2–2. P1 và P3 ở Đội Trái, P2 và P4 ở Đội Phải. Muốn đổi đội thì đổi chỗ trong sảnh.
 
 ## Cấu trúc code
 
