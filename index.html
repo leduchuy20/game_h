@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tròn Party</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage">
+    <canvas id="cv" width="1280" height="720"></canvas>
+    <div id="ui">
+
+      <!-- Màn hình chào -->
+      <section class="screen" id="s-title">
+        <div class="logo"><span class="l1">Tròn</span><span class="l2">Party</span></div>
+        <div class="title-blobs">
+          <i class="blob" style="--c:#3d9bff;--d:#1f5fbf;--l:#d2e8ff"></i>
+          <i class="blob" style="--c:#ff5c9d;--d:#c02c69;--l:#ffd6e7"></i>
+          <i class="blob" style="--c:#34cc78;--d:#1a8648;--l:#cbf6dd"></i>
+          <i class="blob" style="--c:#ffbf2e;--d:#c0840a;--l:#fff1c6"></i>
+        </div>
+        <p class="sub">Mini-game cho 2–4 người chơi chung một máy</p>
+        <div class="col">
+          <button class="btn primary big" data-act="start">▶ Bắt đầu</button>
+          <button class="btn" data-act="fullscreen">⛶ Toàn màn hình</button>
+        </div>
+        <p class="note">Mẹo: tắt Unikey/EVKey (chuyển sang chế độ E) trước khi chơi để phím không bị nuốt.<br>
+          Có thể cắm thêm tay cầm USB/Bluetooth — mỗi tay cầm là 1 người chơi.</p>
+      </section>
+
+      <!-- Sảnh chờ: ghép người chơi -->
+      <section class="screen" id="s-lobby">
+        <h2>Ai chơi nào?</h2>
+        <p class="hint">Mỗi người nhấn <b>nút Đánh</b> trong bộ phím của mình để vào · nhấn <b>nút Nhảy</b> để rời</p>
+        <div class="slots" id="slots"></div>
+        <div class="schemes" id="schemes"></div>
+        <p class="hint small kb-live" id="kb-live"></p>
+        <div class="row">
+          <button class="btn" data-act="lobby-back">← Quay lại</button>
+          <button class="btn" data-act="add-bot">🤖 + Thêm máy</button>
+          <button class="btn" data-act="rm-bot">🤖 − Bớt máy</button>
+          <button class="btn" data-act="bot-level" id="btn-bot-level">🟡 Máy: Trung bình</button>
+          <button class="btn" data-act="len-level" id="btn-len-level">⏱ Ván: Vừa</button>
+          <button class="btn" data-act="speed" id="btn-speed">🐢 Tốc độ thường</button>
+          <button class="btn" data-act="keys">⌨️ Đổi phím</button>
+          <button class="btn primary" data-act="lobby-next" id="btn-lobby-next">Chọn game →</button>
+        </div>
+        <p class="hint small">Nhấn <b>Enter</b> để bấm nút đang chọn</p>
+      </section>
+
+      <!-- Chọn game -->
+      <section class="screen" id="s-menu">
+        <h2>Chọn trò chơi</h2>
+        <div class="row cats" id="cats"></div>
+        <div class="games" id="games"></div>
+        <div class="row">
+          <button class="btn" data-act="menu-back">← Người chơi</button>
+        </div>
+      </section>
+
+      <!-- Vòng quay sự kiện giữa các game -->
+      <section class="screen overlay" id="s-event"><div class="card" id="event-card"></div></section>
+
+      <!-- Đổi phím (ALL14) -->
+      <section class="screen overlay" id="s-keys"><div class="card" id="keys-card"></div></section>
+
+      <!-- Bàn cờ Chơi tiệc (ALL15): bàn vẽ trên canvas, nhật ký + nút ở dưới -->
+      <section class="screen bottom" id="s-pboard"><div class="card pboard" id="pboard-card"></div></section>
+
+      <!-- Chơi tiệc tự chọn -->
+      <section class="screen overlay" id="s-partyset"><div class="card" id="pset-card"></div></section>
+
+      <!-- Giới thiệu game + sẵn sàng -->
+      <section class="screen overlay" id="s-intro"><div class="card" id="intro-card"></div></section>
+
+      <!-- Kết quả -->
+      <section class="screen overlay" id="s-result"><div class="card" id="result-card"></div></section>
+
+      <!-- Kết quả chung cuộc chế độ tiệc -->
+      <section class="screen overlay" id="s-board"><div class="card" id="board-card"></div></section>
+
+      <!-- Tạm dừng -->
+      <section class="screen overlay" id="s-pause">
+        <div class="card narrow">
+          <h2>Tạm dừng</h2>
+          <div class="col">
+            <button class="btn primary" data-act="resume">▶ Tiếp tục</button>
+            <button class="btn" data-act="restart">↻ Chơi lại game này</button>
+            <button class="btn" data-act="quit">⌂ Về chọn game</button>
+          </div>
+        </div>
+      </section>
+
+      <button id="mute" data-act="mute" title="Bật/tắt âm thanh">🔊</button>
+    </div>
+  </div>
+
+  <script src="js/engine.js"></script>
+  <!-- Mỗi game là 1 file riêng. Thêm game mới: tạo file trong js/games/ rồi thêm 1 dòng script ở đây. -->
+  <script src="js/games/push_base.js"></script>
+  <script src="js/games/sumo.js"></script>
+  <script src="js/games/bomb.js"></script>
+  <script src="js/games/paint.js"></script>
+  <script src="js/games/tron.js"></script>
+  <script src="js/games/crown.js"></script>
+  <script src="js/games/tiles.js"></script>
+  <script src="js/games/soccer.js"></script>
+  <script src="js/games/tug.js"></script>
+  <script src="js/games/race.js"></script>
+  <script src="js/games/fish.js"></script>
+  <script src="js/games/chicken.js"></script>
+  <script src="js/games/tank.js"></script>
+  <script src="js/games/potato.js"></script>
+  <script src="js/games/redlight.js"></script>
+  <script src="js/games/laser.js"></script>
+  <script src="js/games/boxing.js"></script>
+  <script src="js/games/fencing.js"></script>
+  <script src="js/games/impostor.js"></script>
+  <script src="js/games/doors.js"></script>
+  <script src="js/games/flappy.js"></script>
+  <script src="js/games/glass.js"></script>
+  <script src="js/games/army.js"></script>
+  <script src="js/games/stack.js"></script>
+  <script src="js/games/shmup.js"></script>
+  <script src="js/games/simon.js"></script>
+  <script src="js/games/snowball.js"></script>
+  <script src="js/games/rope.js"></script>
+  <script src="js/games/money.js"></script>
+  <script src="js/games/boss.js"></script>
+  <script src="js/games/spotlight.js"></script>
+  <script src="js/games/boba.js"></script>
+  <script src="js/games/rowing.js"></script>
+  <script src="js/games/baseball.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
