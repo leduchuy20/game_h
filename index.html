@@ -35,14 +35,14 @@
       <!-- Sảnh chờ: ghép người chơi -->
       <section class="screen" id="s-lobby">
         <h2>Ai chơi nào?</h2>
-        <p class="hint">Mỗi người nhấn <b>nút Đánh</b> trong bộ phím của mình để vào · nhấn <b>nút Nhảy</b> để rời</p>
+        <p class="hint">Bấm <b>＋ Người chơi</b> hoặc <b>🤖 Máy</b> ở ô trống để thêm — hoặc nhấn <b>nút Đánh</b> trong bộ phím của bạn để vào ngay.<br>
+          <small>Bấm vào <b>tên</b> để đổi tên · bấm <b>hình Tròn</b> để đổi màu · <b>✕</b> để xoá (hoặc giữ nút Nhảy 1 giây)</small></p>
         <div class="slots" id="slots"></div>
         <div class="schemes" id="schemes"></div>
         <p class="hint small kb-live" id="kb-live"></p>
         <div class="row">
           <button class="btn" data-act="lobby-back">← Quay lại</button>
-          <button class="btn" data-act="add-bot">🤖 + Thêm máy</button>
-          <button class="btn" data-act="rm-bot">🤖 − Bớt máy</button>
+          <button class="btn" data-act="add-bot" id="btn-add-bot">🤖 + Thêm máy</button>
           <button class="btn" data-act="bot-level" id="btn-bot-level">🟡 Máy: Trung bình</button>
           <button class="btn" data-act="len-level" id="btn-len-level">⏱ Ván: Vừa</button>
           <button class="btn" data-act="speed" id="btn-speed">🐢 Tốc độ thường</button>
@@ -108,6 +108,7 @@
   <script src="js/games/tron.js"></script>
   <script src="js/games/crown.js"></script>
   <script src="js/games/tiles.js"></script>
+  <script src="js/games/shootout.js"></script>
   <script src="js/games/soccer.js"></script>
   <script src="js/games/tug.js"></script>
   <script src="js/games/race.js"></script>

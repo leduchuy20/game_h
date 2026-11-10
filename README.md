@@ -6,7 +6,10 @@ Bộ mini-game cho **2–4 người chơi chung một máy** (bàn phím và/ho�
 
 1. Mở file `index.html` bằng Chrome hoặc Edge (nhấp đúp là được).
 2. Bấm **⛶ Toàn màn hình**, cắm laptop ra TV nếu muốn.
-3. Trong sảnh, mỗi người nhấn **nút Đánh** trong bộ phím của mình để vào. Thiếu người thì bấm **🤖 + Thêm máy**.
+3. Trong sảnh có 4 ô P1–P4:
+   - **Thêm người:** bấm **🙋 Người chơi** ở ô trống rồi chọn bộ phím (hoặc bấm A trên tay cầm) — hay nhanh hơn: nhấn **nút Đánh** trong bộ phím của bạn là vào ngay. Bấm **🤖 Máy** ở ô trống (hoặc **🤖 + Thêm máy**) để thêm người máy.
+   - **Đổi tên:** bấm vào tên (✏️), gõ tối đa 8 ký tự, Enter để lưu. **Đổi màu:** bấm vào hình Tròn. Tên và màu được nhớ theo từng ô cho lần sau.
+   - **Xoá:** bấm **✕** ở góc ô, hoặc người đó giữ **nút Nhảy 1 giây** (chạm nhẹ không sao — để còn thử phím).
 
 > Nhớ **tắt Unikey/EVKey** (chuyển sang chế độ E) trước khi chơi để phím không bị nuốt.
 
@@ -72,9 +75,9 @@ Các game loại dần người chơi (Truyền Bom, Chim Bay, Né Laser, Gạch
 | ⚡ **Vệt Sáng** | Kiểu Tron: rẽ 90°, đừng đâm tường hay vệt sáng. Chạy sát vệt được tăng tốc, nút Nhảy bay qua vệt (hồi 6 giây). Sau 25 giây tường khép dần. Chế độ Có tường / Xuyên mép. |
 | 👑 **Giữ Vương Miện** | Đội vương miện càng lâu càng nhiều điểm, húc để cướp. Đội lâu thì vương miện nặng, đi chậm dần. Cuối trận ×2. |
 | 🧱 **Gạch Sập** | Né ô nháy đỏ sắp sập, nhảy qua hố, đấm choáng đối thủ; đang nhảy bấm Đánh = dậm đất làm 4 ô quanh đó sắp sập. Chế độ Sập theo đợt / Bước chân (ô bị giẫm sẽ sập). 3 tim. |
-| ⚽ **Bóng Đá** | Chia 2 đội: chạm Đánh = chuyền, giữ Đánh = sút căng, Nhảy = húc cướp bóng. Hai người cùng đội sút cùng lúc → bóng lửa. Cuối trận bàn ×2, hòa thì bàn thắng vàng. |
+| ⚽ **Bóng Đá** | Chia 2 đội: chạm Đánh = chuyền, giữ Đánh = sút căng. Hai người cùng đội sút cùng lúc → bóng lửa. Chế độ **Bóng đá thật** (mặc định): Nhảy = xoạc bóng — xoạc trúng bóng là cướp, xoạc trúng người từ phía sau là phạm lỗi → đá phạt (trong vòng cấm là phạt đền); đội chỉ có 1 người thì có thủ môn tự động (TM); hết giờ hòa thì đá luân lưu 3 lượt rồi đá chết. Đá phạt/phạt đền: hướng = chọn góc, giữ Đánh lấy lực rồi thả (giữ quá lâu dễ vọt xà); thủ môn bấm Nhảy + hướng để bay người. Chế độ **Vui nhộn**: Nhảy = húc cướp bóng, không phạm lỗi, cuối trận bàn ×2, hòa thì bàn thắng vàng. Chế độ **Luân lưu**: chỉ đá luân lưu, nhìn từ sau lưng người sút — bốc thăm đội đá trước, mỗi đội 5 lượt xen kẽ (ván ngắn 3, dài 8), không thể gỡ thì thua sớm, hòa thì đá chết; mọi người lần lượt sút và bắt. Người sút dùng phím hướng di chuyển tâm ngắm (có mũi tên từ bóng tới tâm), giữ Đánh lấy lực rồi thả — thanh lực chia Nhẹ/Vừa/Căng/Quá, càng căng bóng càng nhanh nhưng vòng tâm càng to, quá 100% thì tâm bốc lên xà; giữ thêm Nhảy = Panenka; lúc chạy đà tâm bị ẩn và vẫn đổi hướng được. Thủ môn ←→ đứng chặn; bóng bay rồi chỉ cần bấm Nhảy là bay theo bóng, cú căng vào góc thì phải đoán trước (Nhảy + hướng lúc đối thủ chạy đà). Trận Bóng đá thật hòa cũng đá luân lưu kiểu này (3 lượt). |
 | 🪢 **Kéo Co** | Chia 2 đội, bấm nút Đánh liên tục để kéo nút thắt về phía mình. Thắng 2 hiệp. |
-| 🏎️ **Đua Xe** | Bấm hướng muốn chạy, xe tự chạy. Né vũng dầu, Đánh = tăng tốc. Hộp ? cho 🍌🚀🛡️ (chạm Nhảy để dùng), giữ Nhảy khi ôm cua để drift rồi nhả ra tăng tốc. Chế độ **Đấu bong bóng**: mỗi xe 3 🎈, bắn tên lửa / thả chuối / tăng tốc húc thẳng vào xe khác để làm nổ — hết bóng bị loại. |
+| 🏎️ **Đua Xe** | Lái như xe thật: ← → đánh lái, ↑ ga, ↓ phanh/lùi (máy cũng lái y vậy). 3 đường đua dài, bản đồ lớn hơn màn hình — camera tự đi theo và thu phóng để luôn thấy đủ các xe. Chọn đường ở màn giới thiệu (hoặc 🎲 ngẫu nhiên): 🌳 **Đồng Cỏ** (khúc chữ U sâu, đường tắt đất băng qua sông — phải tăng tốc lên cầu nhảy mới bay qua), 🌵 **Sa Mạc** (2 vực cắt ngang đường, đường tắt cát có xương rồng), ❄️ **Núi Tuyết** (đèo ngoằn ngoèo, mảng băng trơn, suối băng phải nhảy qua, đường tắt cắt ngang hồ băng). Đánh = tăng tốc; hộp ? cho 🍌🚀🛡️ (chạm Nhảy để dùng), giữ Nhảy khi ôm cua để drift rồi nhả ra tăng tốc. Rơi xuống sông/vực thì hồi lại phía sau. Chế độ **Đấu bong bóng**: mỗi xe 3 🎈, bắn tên lửa / thả chuối / tăng tốc húc thẳng vào xe khác để làm nổ — hết bóng bị loại. |
 | 🐟 **Cá Lớn Nuốt Cá Bé** | Nuốt cá nhỏ hơn để lớn, né cá to hơn và cá mập. Cá càng to càng tự sụt cân dần. Hết giờ, nặng nhất thắng. |
 | 🐔 **Bắt Gà** | Ôm gà về chuồng mình, vào chuồng người khác để trộm, húc người đang ôm gà để làm rơi. |
 | 🪖 **Xe Tăng** | Chạy & xoay nòng, đạn bắn ra lúc nhả nút Đánh và nảy 1 lần khi chạm tường (coi chừng tự bắn mình). Hạ nhiều nhất thắng. Chế độ **Cướp cờ** (2–2): lấy cờ đội bạn mang về căn cứ mình, hạ người cầm cờ thì cờ rơi, chạm cờ nhà đang rơi để trả về; cướp 3 cờ thắng. |

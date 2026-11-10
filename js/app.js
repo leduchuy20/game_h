@@ -3,9 +3,22 @@
    Tròn Party — điều khiển luồng: sảnh, menu, intro, chơi, kết quả, tiệc
    ========================================================= */
 
+/** biểu tượng cho thẻ chế độ ở màn intro (game có thể tự khai báo `icon` trong modes) */
+const MODE_ICONS = {
+  'baseball:classic': '🤖', 'baseball:pitcher': '🧢',
+  'boss:classic': '🟣', 'boss:fire': '🔥', 'boss:ice': '❄️', 'boss:fly': '🦅', 'boss:random': '🎲',
+  'fencing:points': '🎯', 'fencing:march': '🚩', 'paint:ffa': '🎨', 'paint:team': '🤝',
+  'race:race': '🏁', 'race:balloon': '🎈', 'soccer:real': '⚽', 'soccer:shootout': '🥅', 'soccer:fun': '🎉',
+  'spotlight:lights': '💡', 'spotlight:hunter': '🔦', 'stack:classic': '🧱', 'stack:physics': '🌀',
+  'tank:ffa': '💥', 'tank:ctf': '🚩', 'tiles:waves': '🌊', 'tiles:step': '👣', 'tron:walls': '🧱', 'tron:wrap': '🌀',
+  rounds: '🥊', team: '🤝', stocks: '❤️', koth: '👑', train: '🎯', random: '🎲', classic: '⭐',
+};
+const modeIcon = (gid, m) => m.icon || MODE_ICONS[`${gid}:${m.id}`] || MODE_ICONS[m.id] || '🎮';
+
 const App = {
   state: 'title',
   slots: [null, null, null, null],
+  picking: -1, editing: -1, leaveT: [0, 0, 0, 0],
   players: [],
   def: null, inst: null, api: null, res: null,
   party: null,          // { queue:[def], idx, pts:[] }
@@ -27,8 +40,10 @@ const App = {
     try { const lv = localStorage.getItem('tronparty.botLevel'); if (BOT_LEVELS[lv]) this.botLevel = lv; } catch (e) { /* bỏ qua */ }
     try { const ln = localStorage.getItem('tronparty.lenLevel'); if (GAME_LENGTHS[ln]) this.lenLevel = ln; } catch (e) { /* bỏ qua */ }
     try { this.gameMode = JSON.parse(localStorage.getItem('tronparty.modes') || '{}') || {}; } catch (e) { this.gameMode = {}; }
+    try { this.gameVariant = JSON.parse(localStorage.getItem('tronparty.variants') || '{}') || {}; } catch (e) { this.gameVariant = {}; }
     try { this.fast = localStorage.getItem('tronparty.fast') === '1'; } catch (e) { /* bỏ qua */ }
     loadKeys(); // ALL14: bộ phím đã đổi
+    this.loadProfiles(); // tên + màu từng ô
     try {
       const ps = JSON.parse(localStorage.getItem('tronparty.partySet') || 'null');
       if (ps && [3, 5, 8].includes(ps.count) && Array.isArray(ps.off)) this.partySet = ps;
@@ -161,6 +176,13 @@ const App = {
       case 'lobby-back': this.show('s-title'); this.state = 'title'; break;
       case 'add-bot': this.addBot(); break;
       case 'rm-bot': this.removeBot(); break;
+      case 'slot-human': this.picking = +el.dataset.s; this.renderLobby('[data-act="slot-kb"]'); break;
+      case 'slot-kb': this.join({ type: 'kb', scheme: +el.dataset.k }, +el.dataset.s); break;
+      case 'slot-cancel': { const s = this.picking; this.picking = -1; this.renderLobby(`[data-act="slot-human"][data-s="${s}"]`); break; }
+      case 'slot-bot': this.addBot(+el.dataset.s); break;
+      case 'slot-rm': this.removeSlot(+el.dataset.s); break;
+      case 'slot-color': this.cycleColor(+el.dataset.s); break;
+      case 'slot-name': this.startRename(+el.dataset.s); break;
       case 'len-level': {
         this.lenLevel = LEN_ORDER[(LEN_ORDER.indexOf(this.lenLevel) + 1) % LEN_ORDER.length];
         try { localStorage.setItem('tronparty.lenLevel', this.lenLevel); } catch (e) { /* bỏ qua */ }
@@ -244,6 +266,8 @@ const App = {
       case 'party-new': this.openPartySet(); break;
       case 'go': this.beginCountdown(); break;
       case 'mode': this.cycleMode(); break;
+      case 'mode-set': this.setMode(el.dataset.mode); break;
+      case 'variant-set': this.setVariant(el.dataset.variant); break;
       case 'intro-back': this.endParty(); this.openMenu(); break;
     }
   },
@@ -251,68 +275,132 @@ const App = {
   /* ---------- Sảnh ---------- */
   openLobby() {
     this.state = 'lobby';
-    this.inst = null;
+    this.inst = null; this.picking = -1; this.editing = -1;
+    // tên/màu có thể vừa đổi: cập nhật người đang ở trong ô
+    this.slots.forEach((p, s) => { if (p) { p.name = this.profiles[s].name || 'P' + (s + 1); p.color = COLOR_CHOICES[this.profiles[s].color]; } });
     this.renderLobby();
     this.show('s-lobby');
   },
   sameSrc(a, b) { return a && b && a.type === b.type && (a.type === 'kb' ? a.scheme === b.scheme : a.index === b.index); },
-  join(src) {
+  /* hồ sơ từng ô (tên + màu) — nhớ trong localStorage 'tronparty.profiles' */
+  loadProfiles() {
+    this.profiles = [0, 1, 2, 3].map((s) => ({ name: '', color: s }));
+    try {
+      const a = JSON.parse(localStorage.getItem('tronparty.profiles') || 'null');
+      if (Array.isArray(a)) a.slice(0, 4).forEach((p, s) => {
+        if (p && typeof p.name === 'string') this.profiles[s].name = p.name.slice(0, NAME_MAX);
+        if (p && Number.isInteger(p.color) && p.color >= 0 && p.color < COLOR_CHOICES.length) this.profiles[s].color = p.color;
+      });
+    } catch (e) { /* bỏ qua */ }
+  },
+  saveProfiles() { try { localStorage.setItem('tronparty.profiles', JSON.stringify(this.profiles)); } catch (e) { /* bỏ qua */ } },
+  /** vào ô s (mặc định: ô trống đầu tiên, hoặc ô đang chọn bộ phím, hoặc thay một máy) */
+  join(src, slot) {
     if (this.slots.some((p) => p && this.sameSrc(p.src, src))) return;
-    let s = this.slots.findIndex((p) => !p);
+    let s = slot ?? (this.picking >= 0 && !this.slots[this.picking] ? this.picking : this.slots.findIndex((p) => !p));
     if (s < 0) s = this.slots.findIndex((p) => p && p.bot);
     if (s < 0) return;
     this.slots[s] = this.makePlayer(s, src, false);
+    this.picking = -1;
     Sfx.play('join');
     this.renderLobby();
   },
-  leave(src) {
-    const s = this.slots.findIndex((p) => p && this.sameSrc(p.src, src));
-    if (s < 0) return;
-    this.slots[s] = null;
+  removeSlot(s) {
+    if (!this.slots[s]) return;
+    this.slots[s] = null; this.leaveT[s] = 0;
     Sfx.play('leave');
     this.renderLobby();
   },
-  addBot() {
-    const s = this.slots.findIndex((p) => !p);
-    if (s < 0) return;
+  addBot(slot) {
+    const s = slot ?? this.slots.findIndex((p) => !p);
+    if (s < 0 || this.slots[s]) return;
     this.slots[s] = this.makePlayer(s, null, true);
+    if (this.picking === s) this.picking = -1;
     Sfx.play('join');
     this.renderLobby();
   },
   removeBot() {
-    for (let s = 3; s >= 0; s--) {
-      if (this.slots[s] && this.slots[s].bot) { this.slots[s] = null; Sfx.play('leave'); break; }
-    }
-    this.renderLobby();
+    for (let s = 3; s >= 0; s--) if (this.slots[s] && this.slots[s].bot) { this.removeSlot(s); return; }
   },
   makePlayer(s, src, bot) {
-    return { slot: s, color: PLAYER_COLORS[s], name: 'P' + (s + 1), src, bot };
+    const pf = this.profiles[s];
+    return { slot: s, color: COLOR_CHOICES[pf.color], name: pf.name || 'P' + (s + 1), src, bot };
+  },
+  /** đổi sang màu kế tiếp chưa ai dùng */
+  cycleColor(s) {
+    const used = this.slots.map((p, j) => (p && j !== s ? this.profiles[j].color : -1));
+    let c = this.profiles[s].color;
+    for (let k = 0; k < COLOR_CHOICES.length; k++) { c = (c + 1) % COLOR_CHOICES.length; if (!used.includes(c)) break; }
+    this.profiles[s].color = c; this.saveProfiles();
+    if (this.slots[s]) this.slots[s].color = COLOR_CHOICES[c];
+    Sfx.tone(500 + c * 60, 0.06, 'sine', 0.06);
+    this.renderLobby(`[data-act="slot-color"][data-s="${s}"]`);
+  },
+  startRename(s) {
+    this.editing = s;
+    this.renderLobby();
+    const inp = document.getElementById('nm-input');
+    if (!inp) return;
+    inp.focus(); inp.select();
+    const done = (save) => {
+      if (this.editing !== s) return;
+      this.editing = -1;
+      if (save) {
+        const v = inp.value.replace(/\s+/g, ' ').trim().slice(0, NAME_MAX);
+        this.profiles[s].name = v; this.saveProfiles();
+        if (this.slots[s]) this.slots[s].name = v || 'P' + (s + 1);
+        Sfx.play('pickup');
+      }
+      this.lock = 0.25;
+      this.renderLobby(`[data-act="slot-name"][data-s="${s}"]`);
+    };
+    inp.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); done(true); } else if (e.key === 'Escape') { e.preventDefault(); done(false); } });
+    inp.addEventListener('blur', () => done(true));
   },
   blobHTML(c, cls = '') {
     return `<i class="blob ${cls}" style="--c:${c.main};--d:${c.dark};--l:${c.light}"></i>`;
   },
-  renderLobby() {
+  renderLobby(focusSel) {
     const el = document.getElementById('slots');
+    const used = (src) => this.slots.some((p) => p && this.sameSrc(p.src, src));
     el.innerHTML = this.slots.map((p, s) => {
-      const c = PLAYER_COLORS[s];
+      const c = p ? p.color : COLOR_CHOICES[this.profiles[s].color];
       const style = `--c:${c.main};--d:${c.dark};--l:${c.light}`;
+      if (!p && this.picking === s) {
+        // đang chọn bộ phím cho ô này
+        const free = KB_SCHEMES.map((sc, i) => (used({ type: 'kb', scheme: i }) ? '' :
+          `<button class="btn small" data-act="slot-kb" data-s="${s}" data-k="${i}">⌨️ ${sc.labels.move}</button>`)).join('');
+        return `<div class="slot pick" style="${style}">
+          <div class="nm small">P${s + 1} dùng phím nào?</div>
+          <div class="pickgrid">${free || '<span class="empty">Hết bộ phím trống</span>'}</div>
+          <div class="keys">🎮 Tay cầm: bấm <b>A</b></div>
+          <button class="btn small" data-act="slot-cancel">Huỷ</button></div>`;
+      }
       if (!p) {
-        return `<div class="slot" style="${style}">${this.blobHTML(c, 'lg ghost')}
-          <div class="nm" style="opacity:.4">P${s + 1}</div><div class="empty">Trống</div></div>`;
+        return `<div class="slot" style="${style}">
+          <div class="plus">＋</div>
+          <div class="empty">Ô trống · P${s + 1}</div>
+          <div class="row tight"><button class="btn small" data-act="slot-human" data-s="${s}">🙋 Người chơi</button>
+            <button class="btn small" data-act="slot-bot" data-s="${s}">🤖 Máy</button></div></div>`;
       }
       const lb = srcLabels(p.src);
       const keys = p.bot ? 'Máy tự chơi' :
         `Đi: <kbd>${lb.move}</kbd><br>Đánh: <kbd>${lb.act}</kbd> · Nhảy: <kbd>${lb.jump}</kbd>`;
-      const test = p.bot ? '' : `<div class="ktest" id="kt${s}">${[['up', '↑'], ['down', '↓'], ['left', '←'], ['right', '→'], ['act', 'Đánh'], ['jump', 'Nhảy']].map(([a, t]) => `<b data-k="${a}">${t}</b>`).join('')}</div>`;
-      return `<div class="slot on" style="${style}">${this.blobHTML(c, 'lg')}
-        <div class="nm">P${s + 1}</div>
+      const test = p.bot ? '' : `<div class="ktest" id="kt${s}">${[['up', '↑'], ['down', '↓'], ['left', '←'], ['right', '→'], ['act', 'Đánh'], ['jump', 'Nhảy']].map(([a, t]) => `<b data-k="${a}">${t}</b>`).join('')}</div>
+        <div class="leavebar" id="lv${s}"><i></i><span>Giữ Nhảy để rời</span></div>`;
+      const nameEl = this.editing === s
+        ? `<input id="nm-input" class="nm-input" maxlength="${NAME_MAX}" value="${p.name.replace(/"/g, '&quot;')}" placeholder="P${s + 1}" autocomplete="off" spellcheck="false">`
+        : `<button class="btn nmbtn" data-act="slot-name" data-s="${s}" title="Đổi tên">${p.name.replace(/</g, '&lt;')} <small>✏️</small></button>`;
+      return `<div class="slot on" style="${style}">
+        <button class="btn xbtn" data-act="slot-rm" data-s="${s}" title="Xoá người chơi">✕</button>
+        <button class="btn blobbtn" data-act="slot-color" data-s="${s}" title="Đổi màu">${this.blobHTML(c, 'lg')}</button>
+        ${nameEl}
         <div class="src">${p.bot ? '🤖 Máy' : (p.src.type === 'pad' ? '🎮 ' : '⌨️ ') + srcName(p.src)}</div>
         <div class="keys">${keys}</div>${test}</div>`;
     }).join('');
 
-    const used = (src) => this.slots.some((p) => p && this.sameSrc(p.src, src));
-    const sch = KB_SCHEMES.map((s, i) =>
-      `<div class="scheme ${used({ type: 'kb', scheme: i }) ? 'used' : ''}">⌨️ ${s.labels.move} · vào: <b>${s.labels.act}</b></div>`).join('');
+    const sch = KB_SCHEMES.map((sc, i) =>
+      `<div class="scheme ${used({ type: 'kb', scheme: i }) ? 'used' : ''}">⌨️ ${sc.labels.move} · vào: <b>${sc.labels.act}</b></div>`).join('');
     const pc = Input.padCount();
     this.lastPadCount = pc;
     document.getElementById('schemes').innerHTML = sch +
@@ -325,20 +413,30 @@ const App = {
     document.getElementById('btn-len-level').textContent = `${L.icon} Ván: ${L.name}`;
     document.getElementById('btn-speed').textContent = this.fast ? '⚡ Tua nhanh ×1,3' : '🐢 Tốc độ thường';
     const n = this.slots.filter(Boolean).length;
+    document.getElementById('btn-add-bot').disabled = n >= 4;
     const btn = document.getElementById('btn-lobby-next');
     btn.disabled = n < 2;
     btn.textContent = n < 2 ? 'Cần ít nhất 2 người' : `Chọn game → (${n} người)`;
-    if (this.focused && this.focused.disabled) this.setFocus(this.focusables()[0], false);
-  },
-  lobbyInput() {
-    KB_SCHEMES.forEach((s, i) => {
-      if (Input.hit(s.keys.act)) this.join({ type: 'kb', scheme: i });
-      if (Input.hit(s.keys.jump)) this.leave({ type: 'kb', scheme: i });
-    });
-    for (let i = 0; i < 4; i++) {
-      if (Input.padHit(i, 0)) this.join({ type: 'pad', index: i });
-      if (Input.padHit(i, 1)) this.leave({ type: 'pad', index: i });
+    const want = focusSel && document.querySelector(`#s-lobby ${focusSel}`);
+    if (want) this.setFocus(want, false);
+    else if (!this.focused || this.focused.disabled || !document.body.contains(this.focused)) {
+      const els = this.focusables();
+      this.setFocus(els.find((e) => e.classList.contains('primary') && !e.disabled) || els[0] || null, false);
     }
+  },
+  lobbyInput(dt) {
+    if (this.editing >= 0) return;
+    KB_SCHEMES.forEach((sc, i) => { if (Input.hit(sc.keys.act)) this.join({ type: 'kb', scheme: i }); });
+    for (let i = 0; i < 4; i++) if (Input.padHit(i, 0)) this.join({ type: 'pad', index: i });
+    // giữ Nhảy 1 giây để rời (chạm nhẹ thì không sao — để còn thử phím)
+    this.slots.forEach((p, s) => {
+      if (!p || p.bot) return;
+      const st = this.rawState(p.src);
+      this.leaveT[s] = st.jump ? (this.leaveT[s] || 0) + dt : 0;
+      const bar = document.getElementById('lv' + s);
+      if (bar) { bar.classList.toggle('on', this.leaveT[s] > 0.15); bar.firstElementChild.style.width = Math.min(100, this.leaveT[s] * 100) + '%'; }
+      if (this.leaveT[s] >= 1) this.removeSlot(s);
+    });
     if (Input.padCount() !== this.lastPadCount) this.renderLobby();
     this.updateKeyTest();
   },
@@ -736,6 +834,11 @@ const App = {
       const saved = this.gameMode[def.id];
       this.api.mode = def.modes.some((m) => m.id === saved) ? saved : def.modes[0].id;
     }
+    // biến thể (vd. đường đua) — hàng thẻ thứ hai ở intro
+    if (def.variants) {
+      const saved = (this.gameVariant || {})[def.id], its = def.variants.items;
+      this.api.variant = its.some((v) => v.id === saved) ? saved : its[0].id;
+    }
     // ALL13: hiệp phụ quyết tử — luôn dùng chế độ cơ bản của game
     this.sudden = !!(this.party && this.party.sd);
     this.api.sudden = this.sudden;
@@ -743,7 +846,7 @@ const App = {
     // ALL15: bùa đảo phím mua ở bàn cờ
     this.curse = this.players.map((p, i) => !!(this.party && !this.sudden && this.party.curse && this.party.curse[i]));
     const pc = def.playerChoices;
-    this.choices = this.players.map((p) => (pc ? (p.bot ? U.randi(0, pc.items.length - 1) : (pc.def ?? 0)) : 0));
+    this.choices = this.players.map((p) => (pc ? (p.bot ? (pc.botDef ?? U.randi(0, pc.items.length - 1)) : (pc.def ?? 0)) : 0));
     this.api.choices = this.choices;
     // phụ kiện trang trí (def.looks) — người thật đổi bằng nút Lên, nhớ theo từng chỗ ngồi
     this.lookMem = this.lookMem || [];
@@ -764,7 +867,8 @@ const App = {
     this.lock = 0.4;
   },
   renderIntro() {
-    const d = this.def, c = d.controls;
+    const d = this.def, md = d.modes && d.modes.find((m) => m.id === this.api.mode);
+    const c = (md && md.controls) || d.controls; // chế độ có thể ghi đè luật chơi / cột phím
     const rows = this.players.map((p, i) => {
       const lb = srcLabels(p.src);
       const k = (s) => p.bot ? '—' : `<kbd>${s}</kbd>`;
@@ -793,12 +897,23 @@ const App = {
       ${partyTag}
       ${compact ? `<h2>${d.emoji} ${d.name}</h2>` : `<div class="em">${d.emoji}</div>
       <h2>${d.name}</h2>`}
-      <p class="tag">${d.how || d.tagline}</p>
-      ${d.modes && !this.sudden ? (() => {
-        const m = d.modes.find((x) => x.id === this.api.mode);
-        return `<div class="mode-row"><button class="btn mode" data-act="mode">🎮 Chế độ: <b>${m.name}</b> ⟳</button>
-          <span class="mode-desc">${m.desc}<br><small>Nút Nhảy hoặc bấm chuột để đổi chế độ</small></span></div>`;
-      })() : ''}
+      <p class="tag">${(md && md.how) || d.how || d.tagline}</p>
+      ${d.modes && !this.sudden ? `<div class="mode-pick">
+        <div class="mode-lbl">Chọn chế độ <small>· bấm vào thẻ, hoặc nút Nhảy để chuyển</small></div>
+        <div class="mode-cards">${d.modes.map((m) => {
+          const on = m.id === this.api.mode;
+          return `<button class="mode-card${on ? ' on' : ''}" data-act="mode-set" data-mode="${m.id}" title="${m.desc.replace(/"/g, '&quot;')}">
+            ${on ? '<span class="mcheck">✓</span>' : ''}<span class="mi">${modeIcon(d.id, m)}</span><b>${m.name}</b></button>`;
+        }).join('')}</div>
+        <div class="mode-desc2">${(d.modes.find((m) => m.id === this.api.mode) || d.modes[0]).desc}</div></div>` : ''}
+      ${d.variants && !this.sudden ? `<div class="mode-pick">
+        <div class="mode-lbl">${d.variants.label} <small>· bấm vào thẻ, hoặc nút Lên để chuyển</small></div>
+        <div class="mode-cards">${d.variants.items.map((v) => {
+          const on = v.id === this.api.variant;
+          return `<button class="mode-card${on ? ' on' : ''}" data-act="variant-set" data-variant="${v.id}" title="${v.desc.replace(/"/g, '&quot;')}">
+            ${on ? '<span class="mcheck">✓</span>' : ''}<span class="mi">${v.icon || '🎮'}</span><b>${v.name}</b></button>`;
+        }).join('')}</div>
+        <div class="mode-desc2">${(d.variants.items.find((v) => v.id === this.api.variant) || d.variants.items[0]).desc}</div></div>` : ''}
       ${this.lengthInfo() ? `<p class="tag len-info">Ván này: <b>${this.lengthInfo()}</b></p>` : ''}
       ${this.sudden ? '<p class="tag choice-legend">Chỉ những người đang hòa điểm cao nhất được vào. Ai thắng được +1 điểm và vô địch!</p>' : ''}
       ${this.party && !this.sudden && this.party.idx > 0 ? '<p class="tag choice-legend">🎲 Cược: bấm nút Xuống để cược 1 điểm — về nhất được +2, về bét mất điểm cược</p>' : ''}
@@ -816,12 +931,15 @@ const App = {
   },
   /** Tóm tắt độ dài ván hiện tại (đọc từ instance game). */
   lengthInfo() {
-    const g = this.inst, bits = [];
+    const g0 = this.inst, bits = [];
+    // chỉ lấy số — tránh trùng tên hàm của game (vd. soccer có hàm goal())
+    const g = new Proxy(g0, { get: (o, k) => (typeof o[k] === 'number' ? o[k] : 0) });
     if (g.total) bits.push(`${g.total} giây`);
     if (g.need) bits.push(`thắng ${g.need} hiệp`);
     if (g.laps) bits.push(`${g.laps} vòng`);
     if (g.qn) bits.push(`${g.qn} câu`);
     if (g.goal) bits.push(`${g.goal} hộp`);
+    if (g.kicks) bits.push(`${g.kicks} lượt sút mỗi đội`);
     if (g.target) bits.push(`${g.target} điểm`);
     if (g.pitches) bits.push(`${g.pitches} cú ném`);
     if (g.rounds) bits.push(`${g.rounds} đơn hàng`);
@@ -832,15 +950,38 @@ const App = {
     const ms = this.def.modes;
     if (!ms) return;
     const k = ms.findIndex((m) => m.id === this.api.mode);
-    this.api.mode = ms[(k + 1) % ms.length].id;
+    this.setMode(ms[(k + 1) % ms.length].id);
+  },
+  setMode(id) {
+    const ms = this.def.modes;
+    if (!ms || !ms.some((m) => m.id === id)) return;
+    if (id === this.api.mode) return;
+    this.api.mode = id;
     this.gameMode[this.def.id] = this.api.mode;
     try { localStorage.setItem('tronparty.modes', JSON.stringify(this.gameMode)); } catch (e) { /* bỏ qua */ }
     this.inst = this.def.create(this.api);   // tạo lại để xem trước đúng chế độ
     Sfx.play('select');
     this.renderIntro();
   },
+  setVariant(id) {
+    const vs = this.def.variants;
+    if (!vs || !vs.items.some((v) => v.id === id) || id === this.api.variant) return;
+    this.api.variant = id;
+    this.gameVariant = this.gameVariant || {};
+    this.gameVariant[this.def.id] = id;
+    try { localStorage.setItem('tronparty.variants', JSON.stringify(this.gameVariant)); } catch (e) { /* bỏ qua */ }
+    this.inst = this.def.create(this.api);
+    Sfx.play('select');
+    this.renderIntro();
+  },
+  cycleVariant() {
+    const its = this.def.variants && this.def.variants.items;
+    if (!its) return;
+    const k = its.findIndex((v) => v.id === this.api.variant);
+    this.setVariant(its[(k + 1) % its.length].id);
+  },
   introInput() {
-    let changed = false, rebuild = false, modeHit = false;
+    let changed = false, rebuild = false, modeHit = false, variantHit = false;
     const pc = this.def.playerChoices;
     this.players.forEach((p, i) => {
       if (p.bot) return;
@@ -850,6 +991,11 @@ const App = {
       const down = q.my > 0.5 && Math.abs(q.mx) < 0.5;
       if (this.party && !this.sudden && down && !this.prevDown[i] && this.party.pts[i] >= 1) { this.bets[i] = !this.bets[i]; changed = true; Sfx.play(this.bets[i] ? 'crown' : 'leave'); }
       this.prevDown[i] = down;
+      if (this.def.variants && !this.def.looks && !this.sudden) {
+        const up = q.my < -0.5 && Math.abs(q.mx) < 0.5;
+        if (up && !this.prevUp[i]) variantHit = true;
+        this.prevUp[i] = up;
+      }
       if (this.def.looks) {
         const up = q.my < -0.5 && Math.abs(q.mx) < 0.5;
         if (up && !this.prevUp[i]) { this.looks[i] = (this.looks[i] + 1) % this.def.looks.length; this.lookMem[i] = this.looks[i]; changed = true; Sfx.play('move'); }
@@ -866,6 +1012,7 @@ const App = {
       }
     });
     if (modeHit) { this.cycleMode(); return; }
+    if (variantHit) { this.cycleVariant(); return; }
     if (rebuild) { this.inst = this.def.create(this.api); changed = true; }
     if (changed) {
       if (this.ready.every(Boolean)) { this.beginCountdown(); return; }
@@ -876,7 +1023,7 @@ const App = {
   },
   beginCountdown() {
     // game có chế độ / lựa chọn: tạo lại instance với lựa chọn cuối cùng
-    if (this.def && (this.def.modes || this.def.playerChoices) && this.state === 'intro') this.inst = this.def.create(this.api);
+    if (this.def && (this.def.modes || this.def.playerChoices || this.def.variants) && this.state === 'intro') this.inst = this.def.create(this.api);
     this.hideAll();
     this.state = 'countdown';
     this.cd = 3;
@@ -1052,9 +1199,12 @@ const App = {
     switch (this.state) {
       case 'title': this.menuInput(true); break;
       case 'lobby': {
-        this.lobbyInput();
+        this.lobbyInput(dt);
+        if (this.editing >= 0) break; // đang gõ tên: không điều hướng menu
+        const esc = Input.hit('Escape');
         const m = this.menuInput(false);
-        if (m.back && this.lock <= 0) this.action('lobby-back');
+        if (esc && this.lock <= 0) { if (this.picking >= 0) this.action('slot-cancel'); else this.action('lobby-back'); }
+        void m;
         break;
       }
       case 'menu': {

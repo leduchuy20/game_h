@@ -13,6 +13,16 @@ const PLAYER_COLORS = [
   { name: 'Lá',    main: '#34cc78', dark: '#1a8648', light: '#cbf6dd' },
   { name: 'Vàng',  main: '#ffbf2e', dark: '#c0840a', light: '#fff1c6' },
 ];
+// màu người chơi tự chọn ở sảnh (4 màu đầu = màu mặc định P1–P4)
+const COLOR_CHOICES = PLAYER_COLORS.concat([
+  { name: 'Cam',   main: '#ff8a3d', dark: '#c0561a', light: '#ffe0c9' },
+  { name: 'Tím',   main: '#a66bff', dark: '#6a37c0', light: '#e6d6ff' },
+  { name: 'Ngọc',  main: '#22c7c0', dark: '#11807b', light: '#c6f5f2' },
+  { name: 'Đỏ',    main: '#ff4f4f', dark: '#b81f1f', light: '#ffd2d2' },
+  { name: 'Trắng', main: '#e8e4f2', dark: '#9a93b0', light: '#ffffff' },
+  { name: 'Nâu',   main: '#b0784a', dark: '#6e4423', light: '#f0dcc8' },
+]);
+const NAME_MAX = 8; // tên người chơi tối đa 8 ký tự cho vừa ô điểm trên HUD
 
 /* ---------------- Tiện ích ---------------- */
 const U = {
@@ -125,6 +135,8 @@ const Input = {
 
   init() {
     addEventListener('keydown', (e) => {
+      // đang gõ chữ (đổi tên) thì không coi là phím game
+      if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
       if (GAME_KEYS.has(e.code)) e.preventDefault();
       if (!this.down.has(e.code)) this.queue.add(e.code);
       this.down.add(e.code);
@@ -556,7 +568,15 @@ const Draw = {
       ctx.fillStyle = 'rgba(20,12,40,0.6)'; ctx.fill();
       ctx.lineWidth = 3; ctx.strokeStyle = p.color.main; ctx.stroke();
       Draw.blob(ctx, { x: x + 25, y: y - 2, r: 15, color: p.color, shadow: false, crown: o.crown === i });
-      Draw.text(ctx, p.name, x + 48, y, { size: 20, align: 'left', color: p.color.light, sw: 4 });
+      // tên dài thì thu nhỏ chữ / cắt bớt cho khỏi đè lên số điểm
+      ctx.font = `800 22px ${FONT}`;
+      const tw = ctx.measureText(String(texts[i])).width, room = w - 48 - 16 - tw - 8;
+      let nm = p.name, sz = 20;
+      ctx.font = `800 ${sz}px ${FONT}`;
+      while (sz > 13 && ctx.measureText(nm).width > room) { sz--; ctx.font = `800 ${sz}px ${FONT}`; }
+      while (nm.length > 1 && ctx.measureText(nm).width > room) nm = nm.slice(0, -1);
+      if (nm !== p.name) nm = nm.slice(0, -1) + '…';
+      Draw.text(ctx, nm, x + 48, y, { size: sz, align: 'left', color: p.color.light, sw: 4 });
       Draw.text(ctx, String(texts[i]), x + w - 16, y, { size: 22, align: 'right', sw: 4 });
       ctx.restore();
       x += w + gap;
