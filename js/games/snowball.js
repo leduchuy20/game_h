@@ -2,7 +2,7 @@
 /* Lăn Tuyết — lăn quả cầu tuyết to dần rồi húc đối thủ rơi khỏi sàn. Dùng khung PushKit (push_base.js).
    Cầu càng to càng nặng & húc càng mạnh nhưng tăng tốc chậm hơn. Võ sĩ quyết định cỡ ban đầu và cỡ tối đa. */
 (() => {
-  const { PushArena, CHOICES, MODES } = PushKit;
+  const { PushArena, CHOICES, MODES, LOOKS } = PushKit;
   const SNOW = { main: '#eef4ff', dark: '#a9bcd8', light: '#ffffff' };
   const START = { light: 16, mid: 18, heavy: 21 };
   const MAX = { light: 44, mid: 52, heavy: 58 };
@@ -11,7 +11,7 @@
     constructor(api) {
       const self = {
         baseR: 18,
-        arenas: ['snow', 'snowice', 'snowsq', 'snowspin', 'blizzard'],
+        arenas: ['snow', 'snowice', 'snowsq', 'snowspin', 'blizzard', 'snowsaw'],
         onSpawn: (b, c) => { b.r = START[c.id]; b.rMax = MAX[c.id]; },
         onMove: (b, dt, g) => {
           const sp = Math.hypot(b.vx, b.vy);
@@ -69,6 +69,7 @@
       const rr = 13 * this.cls[b.i].size;
       Draw.blob(ctx, { x: x - Math.cos(b.face) * r * 0.2, y: y - r * 0.75, r: rr * scale, color: c, face: b.face,
         shadow: false, alpha, stun: o.stun, walk: b.walk });
+      this.drawLook(ctx, b, x - Math.cos(b.face) * r * 0.2, y - r * 0.75 - rr * scale, scale);
       if (b.dashT > 0) {
         ctx.strokeStyle = 'rgba(255,255,255,0.7)'; ctx.lineWidth = 4 + b.dashCh * 4;
         ctx.beginPath(); ctx.arc(x, y, r + 6, b.face - 0.9, b.face + 0.9); ctx.stroke();
@@ -78,13 +79,13 @@
 
   Party.register({
     id: 'snowball', name: 'Lăn Tuyết', emoji: '⛄', cat: 'fight',
-    tagline: 'Lăn cầu tuyết to dần, tích lực húc đối thủ rơi khỏi sàn · 4 chế độ',
+    tagline: 'Lăn cầu tuyết to dần, tích lực húc đối thủ rơi khỏi sàn · nhiều chế độ',
     how: 'Lăn quanh sàn để quả cầu tuyết to dần — càng to càng nặng, húc càng mạnh nhưng tăng tốc chậm hơn (trên hồ băng thì to chậm). '
       + 'Giữ nút Đánh để tích lực rồi thả ra để lao. Chạm Nhảy để dậm đất, giữ Nhảy để đứng tấn. Bị đẩy ra mép thì bấm Nhảy để thoát! '
       + 'Sàn vỡ dần từ ngoài vào, coi chừng bão tuyết thổi bạn đi.',
     controls: { move: 'Lăn cầu tuyết', act: 'Giữ: tích lực · Thả: lao', jump: 'Chạm: dậm đất · Giữ: đứng tấn' },
     minPlayers: 2, maxPlayers: 4,
-    modes: MODES, playerChoices: CHOICES,
+    modes: MODES, playerChoices: CHOICES, looks: LOOKS,
     create: (api) => new Snowball(api),
   });
 })();

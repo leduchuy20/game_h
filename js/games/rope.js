@@ -115,7 +115,7 @@
     posOf(i) { const p = this.ps[i]; return { x: p.x, y: GROUND - 26 - p.z }; }
 
     botInput(i) {
-      const p = this.ps[i], st = this.bot[i], lv = this.api.bot;
+      const p = this.ps[i], st = this.bot[i], lv = this.api.botOf(i);
       const o = { jumpP: false };
       if (p.out || p.z > 0) return o;
       const tb = this.timeToBottom();

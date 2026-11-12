@@ -237,7 +237,7 @@
       else { o.mx = Math.cos(a) * 0.15; o.my = Math.sin(a) * 0.15; }
       if (td < 90 && Math.abs(U.angDiff(p.face, a)) < 0.4 && p.punchCd <= 0 && Math.random() < 0.3) {
         // thỉnh thoảng gồng đòn mạnh khi đối thủ đang choáng / vừa né xong
-        if ((tgt.stun > 0.1 || tgt.dodgeCd > 0.4) && Math.random() < 0.5 * (1 - this.api.bot.actDrop)) { st[i].hold = HEAVY_MIN + 0.05; o.act = true; }
+        if ((tgt.stun > 0.1 || tgt.dodgeCd > 0.4) && Math.random() < 0.5 * (1 - this.api.botOf(i).actDrop)) { st[i].hold = HEAVY_MIN + 0.05; o.act = true; }
         else o.actP = true;
       }
       return o;

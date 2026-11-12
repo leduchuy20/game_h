@@ -268,8 +268,6 @@
       this.balloon = api.mode === 'balloon';
       if (this.balloon) { this.total = this.time = api.T(90); this.outCount = 0; } else this.laps = api.count(LAPS);
       this.maxT = MAXT * api.len.count;
-      const L = api.bot || {};
-      this.lvl = L.actDrop > 0.4 ? 0 : L.actDrop > 0.1 ? 1 : 2;
       const grid = U.shuffle(this.P.map((_, i) => i));   // xáo vị trí xuất phát cho công bằng
       this.cars = this.P.map((p, i) => {
         const g = grid[i], row = Math.floor(g / 2), col = g % 2;
@@ -333,6 +331,8 @@
       for (let i = 0; i < sc.P.length; i++) { const d = (sc.P[i][0] - x) ** 2 + (sc.P[i][1] - y) ** 2; if (d < bd) { bd = d; bi = i; } }
       return [bi, Math.sqrt(bd), sc.cum[bi]];
     }
+    /** mức máy của người i: 0 Dễ, 1 Trung bình, 2 Khó */
+    lv(i) { const L = this.api.botOf(i) || {}; return L.actDrop > 0.4 ? 0 : L.actDrop > 0.1 ? 1 : 2; }
     progress(c) { return Math.min(c.cross, this.laps + 1) * this.T.L + this.T.CUM[c.si]; }
     speedOf(c) { return Math.hypot(c.vx, c.vy); }
 
@@ -471,7 +471,7 @@
           vl *= Math.exp(-grip * dt);
           let vmax = c.done ? 170 : c.boostT > 0 ? VBOOST : VMAX;
           vmax *= vmul;
-          if (this.P[i].bot) vmax *= 0.4 + 0.6 * this.api.bot.speed;
+          if (this.P[i].bot) vmax *= 0.4 + 0.6 * this.api.botOf(i).speed;
           const acc = (grip < 3 ? ACC * 0.55 : ACC) * (c.boostT > 0 ? 2 : 1);   // tăng tốc bốc mạnh
           if (c.done) vf = U.approach(vf, vmax, 500 * dt);   // về đích rồi: xe tự chạy chậm
           else if (throttle > 0) vf = U.approach(vf, vmax, (vf < vmax ? acc : 700) * dt);
@@ -786,7 +786,7 @@
       if (sc && !c.onSc) {
         const toEntry = (sc.from - c.si + T.NS) % T.NS;
         if (toEntry > 6 && toEntry < 34 && c.plan === null) {
-          const p = [0.15, 0.4, 0.65][this.lvl];
+          const p = [0.15, 0.4, 0.65][this.lv(i)];
           const needBoost = !!sc.rampX;
           c.plan = Math.random() < p && (!needBoost || c.boostCd < 1.5) ? 'sc' : 'main';
         }

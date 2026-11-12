@@ -191,7 +191,7 @@
     botInput(i) {
       const p = this.ps[i], o = { mx: 0, my: 0, act: false, jumpP: false };
       if (this.finished || p.stun > 0) return o;
-      const lv = this.api.bot;
+      const lv = this.api.botOf(i);
       const k = this.cellAt(p.x, p.y);
       // rương đã lộ gần đó: chạy tới mở; có người khác đang mở thì húc
       const shown = this.chests.filter((c) => c.shown).map((c) => ({ c, d: Math.hypot(this.cellXY(c.k)[0] - p.x, this.cellXY(c.k)[1] - p.y) })).sort((a, b) => a.d - b.d)[0];

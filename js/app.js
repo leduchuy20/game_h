@@ -1,6 +1,6 @@
 'use strict';
 /* =========================================================
-   Tròn Party — điều khiển luồng: sảnh, menu, intro, chơi, kết quả, tiệc
+   Tròn Party — điều khiển luồng: sảnh (người thật), menu, intro (đội hình + máy), chơi, kết quả
    ========================================================= */
 
 /** biểu tượng cho thẻ chế độ ở màn intro (game có thể tự khai báo `icon` trong modes) */
@@ -13,6 +13,8 @@ const MODE_ICONS = {
   'tank:ffa': '💥', 'tank:ctf': '🚩', 'tiles:waves': '🌊', 'tiles:step': '👣', 'tron:walls': '🧱', 'tron:wrap': '🌀',
   rounds: '🥊', team: '🤝', stocks: '❤️', koth: '👑', train: '🎯', random: '🎲', classic: '⭐',
 };
+const HELP_FLOAT_T = 12; // số giây đầu ván hiện nhãn phím ngay dưới nhân vật của từng người
+const LV_SHORT = { easy: 'Dễ', normal: 'TB', hard: 'Khó' }; // nút mức máy ở màn giới thiệu
 const modeIcon = (gid, m) => m.icon || MODE_ICONS[`${gid}:${m.id}`] || MODE_ICONS[m.id] || '🎮';
 
 const App = {
@@ -21,33 +23,30 @@ const App = {
   picking: -1, editing: -1, leaveT: [0, 0, 0, 0],
   players: [],
   def: null, inst: null, api: null, res: null,
-  party: null,          // { queue:[def], idx, pts:[] }
   ready: [],
   cd: 0, lastCount: 0, goT: 0, endT: 0, endAge: 0,
   lock: 0,              // khóa nút menu ngắn sau khi mở màn hình (tránh bấm nhầm)
   focused: null,
   bg: [],
   lastPadCount: 0,
-  botLevel: 'normal',
   lenLevel: 'normal',
   gameMode: {},          // chế độ đã chọn cho từng game (vd { sumo: 'stocks' })
-  partySet: { count: 5, off: [] },   // Chơi tiệc tự chọn (ALL3): số game + các game bị tắt
+  seats: null,           // đội hình ván đang mở: [{ h: ô sảnh } | { bot: true, level }]
+  bench: [],             // người thật đang nghỉ ván này (ô sảnh)
   tauntCd: [],           // hồi chiêu biểu cảm từng người (ALL12)
+  helpOn: false,         // dải phím đầy đủ ở mép dưới lúc chơi (phím H bật/tắt, nhớ localStorage)
   fast: false,           // ALL9 đột biến "Tua nhanh ×1,3" bật ở sảnh (lưu localStorage)
   speedMul: 1,           // hệ số tốc độ của ván đang chơi
 
   init() {
-    try { const lv = localStorage.getItem('tronparty.botLevel'); if (BOT_LEVELS[lv]) this.botLevel = lv; } catch (e) { /* bỏ qua */ }
     try { const ln = localStorage.getItem('tronparty.lenLevel'); if (GAME_LENGTHS[ln]) this.lenLevel = ln; } catch (e) { /* bỏ qua */ }
     try { this.gameMode = JSON.parse(localStorage.getItem('tronparty.modes') || '{}') || {}; } catch (e) { this.gameMode = {}; }
     try { this.gameVariant = JSON.parse(localStorage.getItem('tronparty.variants') || '{}') || {}; } catch (e) { this.gameVariant = {}; }
+    try { this.gameOpts = JSON.parse(localStorage.getItem('tronparty.opts') || '{}') || {}; } catch (e) { this.gameOpts = {}; }
     try { this.fast = localStorage.getItem('tronparty.fast') === '1'; } catch (e) { /* bỏ qua */ }
+    try { this.helpOn = localStorage.getItem('tronparty.helpbar') === '1'; } catch (e) { /* bỏ qua */ }
     loadKeys(); // ALL14: bộ phím đã đổi
     this.loadProfiles(); // tên + màu từng ô
-    try {
-      const ps = JSON.parse(localStorage.getItem('tronparty.partySet') || 'null');
-      if (ps && [3, 5, 8].includes(ps.count) && Array.isArray(ps.off)) this.partySet = ps;
-    } catch (e) { /* bỏ qua */ }
     // rung tay cầm (ALL11): rung màn hình → rung nhẹ mọi tay cầm người thật; Party.rumble(i) → rung mạnh tay cầm người đó
     FX.onShake = (a) => {
       if (!['play', 'ending'].includes(this.state) || a < 4) return;
@@ -69,6 +68,17 @@ const App = {
       Sfx.ensure();
       this.action(b.dataset.act, b);
     });
+    // BRD1: chuột trên canvas → game (nếu game có onPointer), toạ độ theo hệ 1280×720
+    const ptr = (type) => (e) => {
+      const g = this.inst;
+      if (!g || !g.onPointer || !['play', 'ending'].includes(this.state)) return;
+      const r = this.cv.getBoundingClientRect();
+      g.onPointer((e.clientX - r.left) * W / r.width, (e.clientY - r.top) * H / r.height, type, e);
+    };
+    this.cv.addEventListener('pointerdown', (e) => { Sfx.ensure(); ptr('down')(e); });
+    this.cv.addEventListener('pointermove', ptr('move'));
+    addEventListener('pointerup', ptr('up'));
+    this.cv.addEventListener('contextmenu', (e) => { if (this.inst && this.inst.onPointer && this.state === 'play') e.preventDefault(); });
     this.ui.addEventListener('mouseover', (e) => {
       const b = e.target.closest('.btn');
       if (b && !b.disabled) this.setFocus(b, false);
@@ -174,12 +184,9 @@ const App = {
         document.getElementById('mute').textContent = Sfx.muted ? '🔇' : '🔊';
         break;
       case 'lobby-back': this.show('s-title'); this.state = 'title'; break;
-      case 'add-bot': this.addBot(); break;
-      case 'rm-bot': this.removeBot(); break;
       case 'slot-human': this.picking = +el.dataset.s; this.renderLobby('[data-act="slot-kb"]'); break;
       case 'slot-kb': this.join({ type: 'kb', scheme: +el.dataset.k }, +el.dataset.s); break;
       case 'slot-cancel': { const s = this.picking; this.picking = -1; this.renderLobby(`[data-act="slot-human"][data-s="${s}"]`); break; }
-      case 'slot-bot': this.addBot(+el.dataset.s); break;
       case 'slot-rm': this.removeSlot(+el.dataset.s); break;
       case 'slot-color': this.cycleColor(+el.dataset.s); break;
       case 'slot-name': this.startRename(+el.dataset.s); break;
@@ -195,35 +202,15 @@ const App = {
         this.renderLobby();
         break;
       }
-      case 'bot-level': {
-        this.botLevel = BOT_ORDER[(BOT_ORDER.indexOf(this.botLevel) + 1) % BOT_ORDER.length];
-        try { localStorage.setItem('tronparty.botLevel', this.botLevel); } catch (e) { /* bỏ qua */ }
-        this.renderLobby();
-        break;
-      }
       case 'lobby-next':
-        this.players = this.slots.filter(Boolean);
-        if (this.players.length >= 2) this.openMenu();
+        if (this.slots.some(Boolean)) this.openMenu();
         break;
       case 'menu-back': this.openLobby(); break;
       case 'pick': {
         const def = Party.games.find((g) => g.id === el.dataset.id);
-        this.party = null;
         this.startGame(def);
         break;
       }
-      case 'party': this.openPartySet(); break;
-      case 'pset-count': this.partySet.count = +el.dataset.n; this.savePartySet(); this.renderPartySet(el.dataset.act + el.dataset.n); break;
-      case 'pset-toggle': {
-        const id = el.dataset.id, off = this.partySet.off;
-        if (off.includes(id)) off.splice(off.indexOf(id), 1); else off.push(id);
-        this.savePartySet(); this.renderPartySet('pset-toggle' + id);
-        break;
-      }
-      case 'pset-all': this.partySet.off = []; this.savePartySet(); this.renderPartySet('pset-all'); break;
-      case 'pset-none': this.partySet.off = Party.games.map((g) => g.id); this.savePartySet(); this.renderPartySet('pset-none'); break;
-      case 'pset-go': this.startParty(); break;
-      case 'pset-back': this.openMenu(); break;
       case 'cat': {
         this.menuCat = el.dataset.cat;
         this.renderMenu();
@@ -231,44 +218,26 @@ const App = {
         break;
       }
       case 'resume': this.hideAll(); this.state = 'play'; break;
-      case 'restart': this.startGame(this.def); break;
-      case 'quit': this.endParty(); this.openMenu(); break;
-      case 'replay': this.startGame(this.def); break;
-      case 'menu': this.endParty(); this.openMenu(); break;
+      case 'restart': this.startGame(this.def, { keep: true }); break;
+      case 'quit': this.openMenu(); break;
+      case 'replay': this.startGame(this.def, { keep: true }); break;
+      case 'menu': this.openMenu(); break;
       case 'keys': this.openKeys(); break;
       case 'keys-back': this.keyWait = null; this.openLobby(); break;
       case 'keys-reset': resetKeys(); this.keyWait = null; this.renderKeys('keys-reset'); break;
       case 'bind': this.keyWait = { s: +el.dataset.s, a: el.dataset.a, t: 0.15 }; this.renderKeys(); break;
-      case 'pset-board': this.partySet.board = !this.partySet.board; this.savePartySet(); this.renderPartySet('pset-board'); break;
-      case 'pb-go': this.action('party-next'); break;
-      case 'pb-buy': this.shopAnswer(true); break;
-      case 'pb-skip': this.shopAnswer(false); break;
-      case 'sudden-again': this.startGame(this.party.sd.def); break;
-      case 'sudden-done': this.showBoard(); break;
-      case 'party-next':
-        // ALL15: sau mỗi game đi trên bàn cờ (nếu bật)
-        if (this.partySet.board && !this.party.moved) { this.openPBoard(); break; }
-        this.party.moved = false;
-        if (this.party.idx < this.party.queue.length - 1) {
-          this.party.idx++;
-          // ALL2: giữa các game có vòng quay sự kiện (60%)
-          if (Math.random() < 0.6) this.openEvent();
-          else this.startGame(this.party.queue[this.party.idx]);
-        } else if (!this.trySudden()) this.showBoard();
-        break;
-      case 'event-go': this.startGame(this.party.queue[this.party.idx]); break;
-      case 'event-pick': {
-        const def = Party.games.find((g) => g.id === el.dataset.id);
-        if (def) this.party.queue[this.party.idx] = def;
-        this.startGame(this.party.queue[this.party.idx]);
-        break;
-      }
-      case 'party-new': this.openPartySet(); break;
       case 'go': this.beginCountdown(); break;
       case 'mode': this.cycleMode(); break;
       case 'mode-set': this.setMode(el.dataset.mode); break;
       case 'variant-set': this.setVariant(el.dataset.variant); break;
-      case 'intro-back': this.endParty(); this.openMenu(); break;
+      case 'opt-set': this.setOpt(el.dataset.opt, el.dataset.val); break;
+      case 'intro-back': this.openMenu(); break;
+      // đội hình ở màn giới thiệu: thêm/bớt máy, mức từng máy, người thật nghỉ / vào chơi
+      case 'r-add': this.seatEdit('add'); break;
+      case 'r-rm': this.seatEdit('rm', +el.dataset.k); break;
+      case 'r-lv': this.seatEdit('lv', +el.dataset.k, el.dataset.lv); break;
+      case 'r-bench': this.seatEdit('bench', +el.dataset.k); break;
+      case 'r-in': this.seatEdit('in', +el.dataset.s); break;
     }
   },
 
@@ -298,7 +267,6 @@ const App = {
   join(src, slot) {
     if (this.slots.some((p) => p && this.sameSrc(p.src, src))) return;
     let s = slot ?? (this.picking >= 0 && !this.slots[this.picking] ? this.picking : this.slots.findIndex((p) => !p));
-    if (s < 0) s = this.slots.findIndex((p) => p && p.bot);
     if (s < 0) return;
     this.slots[s] = this.makePlayer(s, src, false);
     this.picking = -1;
@@ -310,17 +278,6 @@ const App = {
     this.slots[s] = null; this.leaveT[s] = 0;
     Sfx.play('leave');
     this.renderLobby();
-  },
-  addBot(slot) {
-    const s = slot ?? this.slots.findIndex((p) => !p);
-    if (s < 0 || this.slots[s]) return;
-    this.slots[s] = this.makePlayer(s, null, true);
-    if (this.picking === s) this.picking = -1;
-    Sfx.play('join');
-    this.renderLobby();
-  },
-  removeBot() {
-    for (let s = 3; s >= 0; s--) if (this.slots[s] && this.slots[s].bot) { this.removeSlot(s); return; }
   },
   makePlayer(s, src, bot) {
     const pf = this.profiles[s];
@@ -380,8 +337,7 @@ const App = {
         return `<div class="slot" style="${style}">
           <div class="plus">＋</div>
           <div class="empty">Ô trống · P${s + 1}</div>
-          <div class="row tight"><button class="btn small" data-act="slot-human" data-s="${s}">🙋 Người chơi</button>
-            <button class="btn small" data-act="slot-bot" data-s="${s}">🤖 Máy</button></div></div>`;
+          <div class="row tight"><button class="btn small" data-act="slot-human" data-s="${s}">🙋 Người chơi</button></div></div>`;
       }
       const lb = srcLabels(p.src);
       const keys = p.bot ? 'Máy tự chơi' :
@@ -406,17 +362,13 @@ const App = {
     document.getElementById('schemes').innerHTML = sch +
       `<div class="scheme">🎮 Tay cầm (${pc} đã cắm) · vào: <b>A</b></div>`;
 
-    const lvBtn = document.getElementById('btn-bot-level');
-    const icons = { easy: '🟢', normal: '🟡', hard: '🔴' };
-    lvBtn.textContent = `${icons[this.botLevel]} Máy: ${BOT_LEVELS[this.botLevel].name}`;
     const L = GAME_LENGTHS[this.lenLevel];
     document.getElementById('btn-len-level').textContent = `${L.icon} Ván: ${L.name}`;
     document.getElementById('btn-speed').textContent = this.fast ? '⚡ Tua nhanh ×1,3' : '🐢 Tốc độ thường';
     const n = this.slots.filter(Boolean).length;
-    document.getElementById('btn-add-bot').disabled = n >= 4;
     const btn = document.getElementById('btn-lobby-next');
-    btn.disabled = n < 2;
-    btn.textContent = n < 2 ? 'Cần ít nhất 2 người' : `Chọn game → (${n} người)`;
+    btn.disabled = n < 1;
+    btn.textContent = n < 1 ? 'Cần ít nhất 1 người' : `Chọn game → (${n} người)`;
     const want = focusSel && document.querySelector(`#s-lobby ${focusSel}`);
     if (want) this.setFocus(want, false);
     else if (!this.focused || this.focused.disabled || !document.body.contains(this.focused)) {
@@ -516,22 +468,19 @@ const App = {
     this.show('s-menu');
   },
   renderMenu() {
-    const n = this.players.length, cat = this.menuCat || 'all';
+    const cat = this.menuCat || 'all';
     document.getElementById('cats').innerHTML = GAME_CATS.map((c) => {
       const cnt = c.id === 'all' ? Party.games.length : Party.games.filter((g) => g.cat === c.id).length;
       return `<button class="btn tab ${c.id === cat ? 'on' : ''}" data-act="cat" data-cat="${c.id}">${c.icon} ${c.name} <small>${cnt}</small></button>`;
     }).join('');
-    const cards = cat !== 'all' ? [] : [`<button class="btn gamecard party" data-act="party">
-        <span class="em">🎉</span><span class="gn">Chơi tiệc</span>
-        <span class="gt">${this.partySet.count} game ngẫu nhiên liên tiếp · tự chọn danh sách game · cộng điểm</span>
-        <span class="gp">${n} người</span></button>`];
+    const cards = [];
     for (const g of Party.games) {
       if (cat !== 'all' && g.cat !== cat) continue;
-      const ok = n >= (g.minPlayers || 2) && n <= (g.maxPlayers || 4);
-      cards.push(`<button class="btn gamecard" data-act="pick" data-id="${g.id}" ${ok ? '' : 'disabled'}>
+      // thiếu người thì thêm máy, thừa người thì cho nghỉ — chỉnh ở màn giới thiệu của game
+      cards.push(`<button class="btn gamecard" data-act="pick" data-id="${g.id}">
         <span class="em">${g.emoji}</span><span class="gn">${g.name}</span>
         <span class="gt">${g.tagline}</span>
-        <span class="gp">${g.minPlayers || 2}–${g.maxPlayers || 4} người${g.coop ? ' · co-op' : ''}</span></button>`);
+        <span class="gp">${(g.minPlayers || 2) === (g.maxPlayers || 4) ? g.minPlayers : `${g.minPlayers || 2}–${g.maxPlayers || 4}`} người${g.coop ? ' · co-op' : ''}</span></button>`);
     }
     const box = document.getElementById('games');
     box.innerHTML = cards.join('');
@@ -539,296 +488,81 @@ const App = {
   },
 
   /* ---------- Bắt đầu game ---------- */
-  /* ---------- Vòng quay sự kiện giữa các game trong Chơi tiệc (ALL2) ---------- */
-  openEvent() {
-    const pts = this.party.pts, n = this.players.length;
-    const lo = Math.min(...pts), hi = Math.max(...pts);
-    const lastI = pts.indexOf(lo), firstI = pts.indexOf(hi);
-    const pool = this.partyPool().filter((g) => g !== this.party.queue[this.party.idx]);
-    const evs = [
-      { id: 'double', icon: '✨', name: 'Game sau điểm ×2!' },
-      { id: 'fast', icon: '⚡', name: 'Game sau tua nhanh ×1,3!' },
-      { id: 'robin', icon: '🏹', name: 'Người nhất chia 2 điểm cho người bét!' },
-      { id: 'bonus', icon: '🎁', name: 'Ai không đứng nhất +1 điểm!' },
-      { id: 'pick', icon: '👆', name: `${this.players[lastI].name} (đang bét) được chọn game tiếp theo!` },
-      { id: 'none', icon: '😅', name: 'Không có gì xảy ra…' },
-    ].filter((e) => (e.id !== 'robin' || (hi - lo >= 2 && firstI !== lastI)) && (e.id !== 'pick' || pool.length >= 2) && (e.id !== 'bonus' || hi > lo));
-    this.ev = { list: evs, spin: 2.2, tick: 0, k: 0, final: U.pick(evs), lastI, firstI, n, pool, done: false };
-    this.state = 'event';
-    this.renderEvent();
-    this.show('s-event');
-    Sfx.play('warn');
-  },
-  updateEvent(dt) {
-    const e = this.ev;
-    if (e.done) { this.menuInput(true); return; }
-    e.spin -= dt; e.tick -= dt;
-    if (e.tick <= 0) { e.k = (e.k + 1) % e.list.length; e.tick = 0.06 + Math.max(0, 0.22 - e.spin * 0.1); Sfx.tone(700 + e.k * 40, 0.04, 'square', 0.04); this.renderEvent(); }
-    if (e.spin <= 0) { e.done = true; this.applyEvent(e.final); this.renderEvent(); Sfx.play('crown'); }
-  },
-  applyEvent(ev) {
-    const P = this.party, e = this.ev;
-    if (ev.id === 'double') P.mul = 2;
-    if (ev.id === 'fast') P.fastNext = true;
-    if (ev.id === 'robin') { P.pts[e.firstI] -= 2; P.pts[e.lastI] += 2; }
-    if (ev.id === 'bonus') { const hi = Math.max(...P.pts); P.pts.forEach((v, i) => { if (v < hi) P.pts[i] += 1; }); }
-    if (ev.id === 'pick') {
-      e.choices = U.shuffle(e.pool.slice()).slice(0, 3);
-      // người bét là máy thì tự chọn
-      if (this.players[e.lastI].bot) this.party.queue[this.party.idx] = U.pick(e.choices);
-    }
-  },
-  renderEvent() {
-    const e = this.ev, cur = e.done ? e.final : e.list[e.k];
-    const humanPick = e.done && e.final.id === 'pick' && !this.players[e.lastI].bot;
-    const scores = this.players.map((p, i) => `<span class="ev-sc">${this.blobHTML(p.color, 'sm')} <b style="color:${p.color.light}">${p.name}</b> ${this.party.pts[i]} đ</span>`).join('');
-    document.getElementById('event-card').innerHTML = `
-      <span class="party-tag">🎉 Trước game ${this.party.idx + 1}/${this.party.queue.length}</span>
-      <h2>🎡 Vòng quay sự kiện</h2>
-      <div class="ev-wheel ${e.done ? 'done' : ''}"><span class="ev-ic">${cur.icon}</span> ${cur.name}</div>
-      <div class="row">${scores}</div>
-      ${humanPick ? `<p class="tag">${this.players[e.lastI].name} chọn game:</p><div class="row">${e.choices.map((g) => `<button class="btn" data-act="event-pick" data-id="${g.id}">${g.emoji} ${g.name}</button>`).join('')}</div>`
-        : e.done ? `<div class="row"><button class="btn primary" data-act="event-go">Tiếp tục: ${this.party.queue[this.party.idx].emoji} ${this.party.queue[this.party.idx].name} ▶</button></div>` : ''}`;
-    if (e.done) { const els = this.focusables(); this.setFocus(els.find((x) => x.classList.contains('primary')) || els[0] || null, false); }
-  },
-
-  /* ---------- Hiệp phụ quyết tử (ALL13) ---------- */
-  endParty() {
-    if (this.party && this.party.sd) { this.players = this.party.sd.all; this.players.forEach((p, i) => { p.index = i; }); }
-    this.party = null; this.sudden = false;
-  },
-  /** cuối tiệc mà nhiều người hòa điểm cao nhất → chỉ những người đó đấu 1 ván quyết tử */
-  trySudden() {
-    const P = this.party, hi = Math.max(...P.pts);
-    const tied = P.pts.map((v, i) => (v === hi ? i : -1)).filter((i) => i >= 0);
-    if (tied.length < 2 || P.sdWin >= 0) return false;
-    const cands = ['sumo', 'fencing'].map((id) => Party.games.find((g) => g.id === id)).filter(Boolean);
-    if (!cands.length) return false;
-    P.sd = { all: this.players, ids: tied, def: U.pick(cands) };
-    this.players = tied.map((i) => P.sd.all[i]);
-    this.startGame(P.sd.def);
-    return true;
-  },
-  showSuddenResult() {
-    const P = this.party, sd = P.sd, place = this.rankOf(this.res);
-    const win = place.map((v, i) => (v === 0 ? i : -1)).filter((i) => i >= 0);
-    let body;
-    if (win.length === 1) {
-      const w = sd.ids[win[0]], wp = sd.all[w];
-      this.players = sd.all; this.players.forEach((p, i) => { p.index = i; });
-      P.pts[w] += 1; P.sdWin = w; P.sd = null; this.sudden = false;
-      body = `<div class="em">⚔️</div><h2><span style="color:${wp.color.light}">${wp.name}</span> thắng hiệp phụ!</h2>
-        <p class="tag">+1 điểm · ${P.pts[w]} điểm — vô địch tiệc!</p>
-        <div class="row"><button class="btn primary" data-act="sudden-done">Xem chung cuộc 🏆</button></div>`;
-    } else {
-      body = `<div class="em">🤝</div><h2>Vẫn hòa!</h2><p class="tag">Đấu lại thêm một hiệp phụ nữa.</p>
-        <div class="row"><button class="btn primary" data-act="sudden-again">⚔️ Đấu lại</button></div>`;
-    }
-    document.getElementById('result-card').innerHTML = `<span class="party-tag sd-tag">⚔️ Hiệp phụ quyết tử</span>${body}`;
-    this.state = 'result';
-    this.show('s-result');
-    this.lock = 0.9;
-    Sfx.play('win');
-  },
-
-  /* ---------- Bàn cờ Chơi tiệc (ALL15) ---------- */
-  openPBoard() {
-    const P = this.party, n = this.players.length, place = P.lastPlace || this.players.map(() => 0);
-    const RANGE = [[3, 6], [2, 5], [1, 4], [1, 3]];
-    const order = this.players.map((_, i) => i).sort((a, b) => place[a] - place[b] || a - b);
-    this.pb = { order, k: -1, phase: 'next', t: 0.6, roll: 0, steps: 0, log: [], RANGE, place, shop: null, done: false, show: 0 };
-    void n;
-    this.state = 'pboard';
-    this.renderPBoard();
-    this.show('s-pboard');
-    this.inst = null;
-  },
-  pbTiles() {
-    if (this.PB_TILES) return this.PB_TILES;
-    const T = ['start', 'coin', 'coin', 'steal', 'coin', 'star', 'back', 'coin', 'shop', 'coin', 'coin', 'steal', 'coin',
-      'star', 'coin', 'back', 'coin', 'shop', 'coin', 'coin', 'star', 'coin', 'back', 'steal', 'coin'];
-    // 25 ô xếp quanh một hình chữ nhật bo góc
-    const cx = W / 2, cy = 330, hw = 470, hh = 175, per = 4 * (hw + hh), out = [];
-    for (let k = 0; k < T.length; k++) {
-      let d = (k / T.length) * per, x, y;
-      if (d < 2 * hw) { x = cx - hw + d; y = cy - hh; }
-      else if ((d -= 2 * hw) < 2 * hh) { x = cx + hw; y = cy - hh + d; }
-      else if ((d -= 2 * hh) < 2 * hw) { x = cx + hw - d; y = cy + hh; }
-      else { d -= 2 * hw; x = cx - hw; y = cy + hh - d; }
-      out.push({ type: T[k], x, y });
-    }
-    this.PB_TILES = out;
-    return out;
-  },
-  updatePBoard(dt) {
-    const b = this.pb, P = this.party, tiles = this.pbTiles(), N = tiles.length;
-    if (b.done || b.shop) { this.menuInput(true); return; }
-    b.t -= dt;
-    if (b.t > 0) { if (b.phase === 'roll') { b.show = U.randi(b.RANGE[Math.min(3, b.place[b.order[b.k]])][0], b.RANGE[Math.min(3, b.place[b.order[b.k]])][1]); } return; }
-    const i = b.k >= 0 ? b.order[b.k] : -1, name = i >= 0 ? this.players[i].name : '';
-    if (b.phase === 'next') {
-      b.k++;
-      if (b.k >= b.order.length) { b.done = true; P.moved = true; this.renderPBoard(); Sfx.play('crown'); return; }
-      const j = b.order[b.k], rg = b.RANGE[Math.min(3, b.place[j])];
-      b.roll = U.randi(rg[0], rg[1]); b.steps = b.roll; b.phase = 'roll'; b.t = 0.8; Sfx.play('warn');
-    } else if (b.phase === 'roll') {
-      b.show = b.roll; b.log.push(`${name} gieo được ${b.roll}`); this.renderPBoard();
-      b.phase = 'walk'; b.t = 0.35;
-    } else if (b.phase === 'walk') {
-      if (b.steps > 0) {
-        P.pos[i] = (P.pos[i] + 1) % N; b.steps--; b.t = 0.2; Sfx.tone(600 + (b.roll - b.steps) * 60, 0.05, 'square', 0.05);
-        if (P.pos[i] === 0) { P.pts[i] += 3; b.log.push(`${name} đi qua 🏁 Xuất phát +3`); this.renderPBoard(); }
-      } else { b.phase = 'land'; b.t = 0.25; }
-    } else if (b.phase === 'land') {
-      this.landTile(i, tiles[P.pos[i]].type);
-      if (!b.shop) { b.phase = 'next'; b.t = 0.7; }
-      this.renderPBoard();
-    }
-  },
-  landTile(i, type) {
-    const P = this.party, b = this.pb, name = this.players[i].name;
-    const leader = () => { let best = -1; P.pts.forEach((v, j) => { if (j !== i && v > 0 && (best < 0 || v > P.pts[best])) best = j; }); return best; };
-    if (type === 'coin') { P.pts[i] += 1; b.log.push(`${name} 🪙 +1 điểm`); Sfx.play('pickup'); }
-    else if (type === 'star') { P.pts[i] += 3; b.log.push(`${name} ⭐ +3 điểm!`); Sfx.play('crown'); }
-    else if (type === 'steal') {
-      const j = leader();
-      if (j >= 0) { const v = Math.min(2, P.pts[j]); P.pts[j] -= v; P.pts[i] += v; b.log.push(`${name} 🦹 cướp ${v} điểm của ${this.players[j].name}!`); Sfx.play('hurt'); }
-      else b.log.push(`${name} 🦹 chẳng có ai để cướp`);
-    } else if (type === 'back') {
-      const N = this.pbTiles().length; P.pos[i] = (P.pos[i] - 3 + N) % N; b.log.push(`${name} ⏪ lùi 3 ô`); Sfx.play('leave');
-    } else if (type === 'shop') {
-      const j = leader();
-      if (P.pts[i] < 3 || j < 0) b.log.push(`${name} 🛒 ghé cửa hàng nhưng ${P.pts[i] < 3 ? 'không đủ 3 điểm' : 'chưa có ai để yểm'}`);
-      else if (this.players[i].bot) {
-        if (Math.random() < 0.6) this.buyCurse(i, j); else b.log.push(`${name} 🛒 không mua gì`);
-      } else { b.shop = { i, j }; Sfx.play('warn'); }
-    } else if (type === 'start') { P.pts[i] += 3; b.log.push(`${name} 🏁 đứng ở Xuất phát +3`); }
-    b.log = b.log.slice(-4);
-  },
-  buyCurse(i, j) {
-    const P = this.party;
-    P.pts[i] -= 3; P.curse[j] = true;
-    this.pb.log.push(`${this.players[i].name} 🛒 mua bùa: ${this.players[j].name} bị 🔄 đảo phím ở game sau!`);
-    Sfx.play('boom', 0.05);
-  },
-  shopAnswer(buy) {
-    const b = this.pb;
-    if (!b || !b.shop) return;
-    if (buy) this.buyCurse(b.shop.i, b.shop.j); else b.log.push(`${this.players[b.shop.i].name} 🛒 không mua gì`);
-    b.log = b.log.slice(-4);
-    b.shop = null; b.phase = 'next'; b.t = 0.6;
-    this.renderPBoard();
-  },
-  renderPBoard() {
-    const b = this.pb, P = this.party;
-    const last = P.idx >= P.queue.length - 1;
-    const sh = b.shop;
-    document.getElementById('pboard-card').innerHTML = `
-      <div class="pb-log">${b.log.map((l) => `<div>${l}</div>`).join('') || '<div>🎲 Về càng cao, xúc xắc càng to…</div>'}</div>
-      ${sh ? `<div class="row"><span class="tag">🛒 ${this.players[sh.i].name}: mua bùa đảo phím ${this.players[sh.j].name} (−3 điểm)?</span>
-          <button class="btn primary" data-act="pb-buy">Mua 🔄</button><button class="btn" data-act="pb-skip">Bỏ qua</button></div>`
-        : b.done ? `<div class="row"><button class="btn primary" data-act="pb-go">${last ? 'Xem chung cuộc 🏆' : `Game tiếp theo (${P.idx + 2}/${P.queue.length}) ▶`}</button></div>` : ''}`;
-    if (sh || b.done) { const els = this.focusables(); this.setFocus(els.find((x) => x.classList.contains('primary')) || els[0] || null, false); }
-  },
-  drawPBoard(ctx) {
-    const b = this.pb, P = this.party, tiles = this.pbTiles(), t = U.now();
-    if (!b) return;
-    ctx.fillStyle = 'rgba(14,8,30,0.55)'; ctx.fillRect(0, 0, W, H);
-    const ICON = { start: '🏁', coin: '🪙', star: '⭐', steal: '🦹', back: '⏪', shop: '🛒' };
-    const COL = { start: '#ffd23f', coin: '#5b9bd5', star: '#ffb84d', steal: '#e85a6a', back: '#8a7aa8', shop: '#4ec98a' };
-    Draw.text(ctx, '🎲 Bàn cờ Chơi tiệc', W / 2, 92, { size: 34 });
-    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 16; ctx.lineJoin = 'round';
-    ctx.beginPath(); tiles.forEach((tl, k) => (k ? ctx.lineTo(tl.x, tl.y) : ctx.moveTo(tl.x, tl.y))); ctx.closePath(); ctx.stroke();
-    tiles.forEach((tl) => {
-      ctx.fillStyle = COL[tl.type]; ctx.beginPath(); ctx.arc(tl.x, tl.y, 28, 0, TAU); ctx.fill();
-      ctx.strokeStyle = 'rgba(20,10,40,0.5)'; ctx.lineWidth = 3; ctx.stroke();
-      Draw.text(ctx, ICON[tl.type], tl.x, tl.y + 1, { size: 24, stroke: null });
-    });
-    // quân cờ
-    const cnt = {};
-    this.players.forEach((p, i) => {
-      const k = P.pos[i], m = cnt[k] = (cnt[k] || 0) + 1, tl = tiles[k];
-      const cur = b.order[b.k] === i && !b.done;
-      const ox = (m - 1) % 2 ? 14 : -14, oy = m > 2 ? 14 : -14;
-      Draw.blob(ctx, { x: tl.x + ox, y: tl.y + oy - (cur ? Math.abs(Math.sin(t * 8)) * 12 : 0), r: 15, color: p.color, face: Math.PI / 2 });
-    });
-    // giữa bàn: bảng điểm + xúc xắc
-    const inner = this.players.map((p, i) => ({ p, i })).sort((a, c) => P.pts[c.i] - P.pts[a.i]);
-    inner.forEach(({ p, i }, r) => {
-      const y = 245 + r * 44;
-      Draw.blob(ctx, { x: W / 2 - 170, y, r: 16, color: p.color, face: Math.PI / 2, shadow: false });
-      Draw.text(ctx, `${p.name}${P.curse[i] ? ' 🔄' : ''}`, W / 2 - 140, y, { size: 24, align: 'left', color: p.color.light });
-      Draw.text(ctx, `${P.pts[i]} điểm`, W / 2 + 10, y, { size: 24, align: 'left' });
-    });
-    if (b.k >= 0 && !b.done && b.phase !== 'next') {
-      const s = b.phase === 'roll' ? 1 + Math.sin(t * 30) * 0.06 : 1;
-      ctx.save(); ctx.translate(W / 2 + 200, 300); ctx.scale(s, s);
-      Draw.rr(ctx, -40, -40, 80, 80, 14); ctx.fillStyle = '#fff'; ctx.fill();
-      ctx.strokeStyle = this.players[b.order[b.k]].color.main; ctx.lineWidth = 5; ctx.stroke();
-      Draw.text(ctx, String(b.show || b.roll), 0, 2, { size: 48, color: '#2a1840', stroke: null });
-      ctx.restore();
-    }
-  },
-
-  /* ---------- Chơi tiệc tự chọn (ALL3) ---------- */
-  partyPool() {
-    const n = this.players.length;
-    return Party.games.filter((g) => n >= (g.minPlayers || 2) && n <= (g.maxPlayers || 4) && !this.partySet.off.includes(g.id));
-  },
-  savePartySet() { try { localStorage.setItem('tronparty.partySet', JSON.stringify(this.partySet)); } catch (e) { /* bỏ qua */ } },
-  openPartySet() {
-    this.state = 'partyset';
-    this.inst = null;
-    this.renderPartySet();
-    this.show('s-partyset');
-  },
-  renderPartySet(keepFocus) {
-    const n = this.players.length, set = this.partySet, pool = this.partyPool();
-    const L = GAME_LENGTHS[this.lenLevel];
-    const counts = [3, 5, 8].map((c) => `<button class="btn tab ${set.count === c ? 'on' : ''}" data-act="pset-count" data-n="${c}">${c} game</button>`).join('');
-    const chips = GAME_CATS.filter((c) => c.id !== 'all').map((c) => {
-      const games = Party.games.filter((g) => g.cat === c.id);
-      if (!games.length) return '';
-      return `<div class="pset-cat"><span class="pset-cn">${c.icon} ${c.name}</span>${games.map((g) => {
-        const ok = n >= (g.minPlayers || 2) && n <= (g.maxPlayers || 4), on = ok && !set.off.includes(g.id);
-        return `<button class="btn chip ${on ? 'on' : ''}" data-act="pset-toggle" data-id="${g.id}" ${ok ? '' : 'disabled'}>${g.emoji} ${g.name}</button>`;
-      }).join('')}</div>`;
-    }).join('');
-    const short = pool.length < set.count;
-    document.getElementById('pset-card').innerHTML = `
-      <h2>🎉 Chơi tiệc</h2>
-      <p class="tag">Chọn số game và những game được bốc ngẫu nhiên · Ván ${L.name.toLowerCase()} (đổi ở sảnh)</p>
-      <div class="row">${counts}<button class="btn tab" data-act="pset-all">Chọn hết</button><button class="btn tab" data-act="pset-none">Bỏ hết</button>
-        <button class="btn tab ${set.board ? 'on' : ''}" data-act="pset-board">🎲 Bàn cờ: ${set.board ? 'Bật' : 'Tắt'}</button></div>
-      ${set.board ? '<p class="tag pset-board">Sau mỗi game mọi người đi trên bàn cờ 25 ô — về càng cao xúc xắc càng to. Ô ⭐ +3, 🪙 +1, 🦹 cướp điểm, ⏪ lùi 3 ô, 🛒 mua bùa đảo phím người dẫn đầu.</p>' : ''}
-      <div class="pset-list">${chips}</div>
-      <p class="pset-info">${pool.length} game đang bật${short && pool.length ? ` — ít hơn ${set.count}, tiệc sẽ chỉ có ${pool.length} game` : ''}${!pool.length ? ' — hãy bật ít nhất 1 game' : ''}</p>
-      <div class="row"><button class="btn" data-act="pset-back">← Chọn game</button>
-        <button class="btn primary big" data-act="pset-go" ${pool.length ? '' : 'disabled'}>Bắt đầu tiệc ▶</button></div>`;
-    if (keepFocus) {
-      const [act, rest] = [keepFocus.match(/^pset-[a-z]+/)[0], keepFocus.replace(/^pset-[a-z]+/, '')];
-      const sel = act === 'pset-count' ? `[data-act="pset-count"][data-n="${rest}"]` : act === 'pset-toggle' ? `[data-act="pset-toggle"][data-id="${rest}"]` : `[data-act="${act}"]`;
-      this.setFocus(document.querySelector(`#pset-card ${sel}`), false);
-    }
-  },
-  startParty() {
-    const pool = this.partyPool();
-    if (!pool.length) { this.openPartySet(); return; }
-    this.party = { queue: U.shuffle(pool.slice()).slice(0, Math.min(this.partySet.count, pool.length)), idx: 0, pts: this.players.map(() => 0),
-      pos: this.players.map(() => 0), curse: this.players.map(() => false), moved: false, sd: null, sdWin: -1 };
-    this.startGame(this.party.queue[0]);
-  },
-  startGame(def) {
+  /**
+   * Mở màn giới thiệu của game def.
+   * opts.keep  = giữ đội hình ván trước (Chơi lại); không thì dựng đội hình mặc định:
+   *              mọi người thật trong sảnh (thừa thì nghỉ) + máy Trung bình cho đủ số người tối thiểu.
+   * opts.seats = đội hình cho sẵn (smoke test).
+   */
+  startGame(def, opts = {}) {
+    const same = this.def === def;
     this.def = def;
-    this.players.forEach((p, i) => { p.index = i; });
+    if (opts.seats) { this.seats = opts.seats.map((s) => Object.assign({}, s)); this.bench = []; }
+    else if (!(opts.keep && same && this.seats)) this.defaultSeats();
+    this.setupGame();
+    this.state = 'intro';
+    this.renderIntro();
+    this.show('s-intro');
+    this.lock = 0.4;
+  },
+  defaultSeats() {
+    const def = this.def, max = def.maxPlayers || 4, min = def.minPlayers || 2;
+    const hs = this.slots.map((p, s) => (p ? s : -1)).filter((s) => s >= 0);
+    this.seats = hs.slice(0, max).map((h) => ({ h }));
+    this.bench = hs.slice(max);
+    while (this.seats.length < min) this.seats.push({ bot: true, level: 'normal' });
+  },
+  /** sửa đội hình ở màn giới thiệu rồi dựng lại ván */
+  seatEdit(op, k, lv) {
+    const S = this.seats, max = this.def.maxPlayers || 4, min = this.def.minPlayers || 2;
+    let focus = null;
+    if (op === 'add' && S.length < max) { S.push({ bot: true, level: 'normal' }); focus = '[data-act="r-add"]'; }
+    else if (op === 'rm' && S[k] && S[k].bot && S.length > min) { S.splice(k, 1); focus = '[data-act="r-add"]'; }
+    else if (op === 'lv' && S[k] && S[k].bot && BOT_LEVELS[lv]) { S[k].level = lv; focus = `[data-act="r-lv"][data-k="${k}"][data-lv="${lv}"]`; }
+    else if (op === 'bench' && S[k] && !S[k].bot) {
+      this.bench.push(S[k].h);
+      // đang ở số người tối thiểu thì thay bằng một máy
+      if (S.length > min) S.splice(k, 1); else S[k] = { bot: true, level: 'normal' };
+      focus = '[data-act="r-in"]';
+    } else if (op === 'in' && this.bench.includes(k)) {
+      if (S.length < max) S.push({ h: k });
+      else {
+        let b = -1;
+        for (let j = S.length - 1; j >= 0; j--) if (S[j].bot) { b = j; break; }
+        if (b < 0) return;
+        S[b] = { h: k };
+      }
+      this.bench.splice(this.bench.indexOf(k), 1);
+    } else return;
+    this.setupGame();
+    this.renderIntro(focus);
+  },
+  /** dựng người chơi + api + instance từ đội hình hiện tại */
+  setupGame() {
+    const def = this.def;
+    // máy lấy màu chưa ai dùng, tên Máy 1, Máy 2...
+    const used = this.seats.filter((s) => !s.bot).map((s) => this.profiles[s.h].color);
+    let bn = 0;
+    this.players = this.seats.map((s) => {
+      if (!s.bot) return this.slots[s.h];
+      let c = 0;
+      while (used.includes(c) && c < COLOR_CHOICES.length - 1) c++;
+      used.push(c); bn++;
+      return { slot: -1, color: COLOR_CHOICES[c], name: `Máy ${bn}`, src: null, bot: true, level: s.level || 'normal' };
+    });
+    this.players.forEach((p, i) => { p.index = i; p.mem = null; });
     const len = GAME_LENGTHS[this.lenLevel];
+    const firstBot = this.players.find((p) => p.bot);
     this.api = {
-      players: this.players, parts: new Particles(), bot: BOT_LEVELS[this.botLevel], len,
+      players: this.players, parts: new Particles(), len,
+      // mức máy: mỗi máy một mức — game dùng botOf(i); bot = mức của máy đầu tiên (game cũ)
+      bot: BOT_LEVELS[firstBot ? firstBot.level : 'normal'],
+      botOf: (i) => BOT_LEVELS[(this.players[i] && this.players[i].level) || 'normal'],
       T: (sec) => Math.round(sec * len.time),                      // thời gian ván theo độ dài
       wins: len.wins,                                              // số hiệp cần thắng
       count: (n) => Math.max(1, Math.round(n * len.count)),       // số câu / vòng / hộp / điểm
+      sudden: false,                                               // (hiệp phụ quyết tử của Chơi tiệc — đã bỏ)
     };
-    this.players.forEach((p) => { p.mem = null; });
     // chế độ chơi & lựa chọn riêng từng người (nếu game có)
     if (def.modes) {
       const saved = this.gameMode[def.id];
@@ -839,12 +573,12 @@ const App = {
       const saved = (this.gameVariant || {})[def.id], its = def.variants.items;
       this.api.variant = its.some((v) => v.id === saved) ? saved : its[0].id;
     }
-    // ALL13: hiệp phụ quyết tử — luôn dùng chế độ cơ bản của game
-    this.sudden = !!(this.party && this.party.sd);
-    this.api.sudden = this.sudden;
-    if (this.sudden && def.modes) this.api.mode = def.modes[0].id;
-    // ALL15: bùa đảo phím mua ở bàn cờ
-    this.curse = this.players.map((p, i) => !!(this.party && !this.sudden && this.party.curse && this.party.curse[i]));
+    // tuỳ chọn hiển thị (vd. bộ quân, kiểu bàn cờ) — không cần tạo lại instance khi đổi
+    this.api.opts = {};
+    for (const o of def.options || []) {
+      const saved = ((this.gameOpts || {})[def.id] || {})[o.id];
+      this.api.opts[o.id] = o.items.some((v) => v.id === saved) ? saved : o.items[0].id;
+    }
     const pc = def.playerChoices;
     this.choices = this.players.map((p) => (pc ? (p.bot ? (pc.botDef ?? U.randi(0, pc.items.length - 1)) : (pc.def ?? 0)) : 0));
     this.api.choices = this.choices;
@@ -854,51 +588,51 @@ const App = {
     this.api.looks = this.looks;
     this.prevUp = this.players.map(() => false);
     this.prevDir = this.players.map(() => 0);
-    this.speedMul = this.fast || (this.party && this.party.fastNext) ? 1.3 : 1;
-    // ALL10: cược điểm trong Chơi tiệc — máy có điểm thì đôi khi cược
-    this.bets = this.players.map((p, i) => !!(this.party && !this.sudden && p.bot && this.party.pts[i] >= 1 && Math.random() < 0.3));
-    this.prevDown = this.players.map(() => false);
+    this.speedMul = this.fast ? 1.3 : 1;
     this.inst = def.create(this.api);
     this.res = null;
     this.ready = this.players.map((p) => p.bot);
-    this.state = 'intro';
-    this.renderIntro();
-    this.show('s-intro');
-    this.lock = 0.4;
   },
-  renderIntro() {
+  renderIntro(focusSel) {
     const d = this.def, md = d.modes && d.modes.find((m) => m.id === this.api.mode);
     const c = (md && md.controls) || d.controls; // chế độ có thể ghi đè luật chơi / cột phím
+    const max = d.maxPlayers || 4, min = d.minPlayers || 2, nSeat = this.seats.length;
     const rows = this.players.map((p, i) => {
       const lb = srcLabels(p.src);
       const k = (s) => p.bot ? '—' : `<kbd>${s}</kbd>`;
+      const tNames = this.inst.teamNames || TEAMS.names, tCols = this.inst.teamColors || TEAMS.colors; // game cờ: Trắng/Đen
       const team = this.inst.teamOf
-        ? `<td><b style="color:${TEAMS.colors[this.inst.teamOf(i)]}">${TEAMS.names[this.inst.teamOf(i)]}</b></td>` : '';
+        ? `<td><b style="color:${tCols[this.inst.teamOf(i)]}">${tNames[this.inst.teamOf(i)]}</b></td>` : '';
       const pc = d.playerChoices, it = pc ? pc.items[this.choices[i]] : null;
       const choice = (pc ? `<td class="choice">${p.bot ? '' : '◀ '}${it.icon} <b>${it.name}</b>${p.bot ? '' : ' ▶'}</td>` : '')
         + (d.looks ? `<td class="choice">${d.looks[this.looks[i]].icon}${p.bot ? '' : ' <small>↑</small>'}</td>` : '');
+      // ai điều khiển: máy chọn mức Dễ / TB / Khó + bỏ máy; người thật có nút nghỉ ván này
+      const who = p.bot
+        ? `<span class="lvpick">${BOT_ORDER.map((lv) => `<button class="btn lv lv-${lv}${p.level === lv ? ' on' : ''}" data-act="r-lv" data-k="${i}" data-lv="${lv}" title="Máy ${BOT_LEVELS[lv].name}">${LV_SHORT[lv]}</button>`).join('')}</span>`
+          + `<button class="btn xs" data-act="r-rm" data-k="${i}" title="Bỏ máy này" ${nSeat > min ? '' : 'disabled'}>✕</button>`
+        : `${srcName(p.src)} <button class="btn xs" data-act="r-bench" data-k="${i}" title="Nghỉ ván này">💤</button>`;
       return `<tr><td><span class="who">${this.blobHTML(p.color, 'sm')} ${p.name}</span></td>${team}${choice}
-        <td>${p.bot ? '🤖 Máy' : srcName(p.src)}</td>
+        <td class="whoctl">${p.bot ? '🤖 ' : ''}${who}</td>
         <td>${k(lb ? lb.move : '')}</td>
         ${c.act ? `<td>${k(lb ? lb.act : '')}</td>` : ''}
         ${c.jump ? `<td>${k(lb ? lb.jump : '')}</td>` : ''}
-        ${this.party && !this.sudden ? `<td class="bet">${this.curse[i] ? '🔄 Bị đảo phím ' : ''}${this.bets[i] ? '🎲 Cược 1đ' : p.bot || this.party.pts[i] < 1 ? '' : '<small>↓ cược</small>'}</td>` : ''}
-        <td class="ready ${this.ready[i] ? 'yes' : 'no'}">${this.ready[i] ? '✓ Sẵn sàng' : 'Nhấn nút Đánh…'}</td></tr>`;
+        <td class="ready ${this.ready[i] ? 'yes' : 'no'}">${this.ready[i] ? '✓ Sẵn sàng' : 'Nhấn Đánh…'}</td></tr>`;
     }).join('');
     const L = GAME_LENGTHS[this.lenLevel];
-    const partyTag = (this.sudden ? '<span class="party-tag sd-tag">⚔️ Hiệp phụ quyết tử — hòa hạng nhất!</span> '
-      : this.party ? `<span class="party-tag">🎉 Game ${this.party.idx + 1}/${this.party.queue.length}</span> ` : '')
-      + `<span class="party-tag len-tag">${L.icon} Ván ${L.name.toLowerCase()}</span>`
-      + (this.speedMul > 1 ? ' <span class="party-tag fast-tag">⚡ Tua nhanh ×1,3</span>' : '')
-      + (this.party && this.party.mul > 1 ? ' <span class="party-tag">✨ Điểm ×2</span>' : '');
-    const compact = !!(d.modes || d.playerChoices || this.party), card = document.getElementById('intro-card');
+    const tags = `<span class="party-tag len-tag">${L.icon} Ván ${L.name.toLowerCase()}</span>`
+      + ` <span class="party-tag">👥 ${min === max ? min : `${min}–${max}`} người</span>`
+      + (this.speedMul > 1 ? ' <span class="party-tag fast-tag">⚡ Tua nhanh ×1,3</span>' : '');
+    const compact = !!(d.modes || d.playerChoices || d.options || nSeat > 2), card = document.getElementById('intro-card');
     card.classList.toggle('compact', compact);
+    // người thật đang nghỉ: vào chơi (đủ chỗ thì thay một máy)
+    const canIn = nSeat < max || this.seats.some((s) => s.bot);
+    const benchBtns = this.bench.map((h) => `<button class="btn small" data-act="r-in" data-s="${h}" ${canIn ? '' : 'disabled'}>▶ ${this.slots[h].name} vào chơi</button>`).join('');
     card.innerHTML = `
-      ${partyTag}
+      <div class="intro-tags">${tags}</div>
       ${compact ? `<h2>${d.emoji} ${d.name}</h2>` : `<div class="em">${d.emoji}</div>
       <h2>${d.name}</h2>`}
       <p class="tag">${(md && md.how) || d.how || d.tagline}</p>
-      ${d.modes && !this.sudden ? `<div class="mode-pick">
+      ${d.modes ? `<div class="mode-pick">
         <div class="mode-lbl">Chọn chế độ <small>· bấm vào thẻ, hoặc nút Nhảy để chuyển</small></div>
         <div class="mode-cards">${d.modes.map((m) => {
           const on = m.id === this.api.mode;
@@ -906,7 +640,7 @@ const App = {
             ${on ? '<span class="mcheck">✓</span>' : ''}<span class="mi">${modeIcon(d.id, m)}</span><b>${m.name}</b></button>`;
         }).join('')}</div>
         <div class="mode-desc2">${(d.modes.find((m) => m.id === this.api.mode) || d.modes[0]).desc}</div></div>` : ''}
-      ${d.variants && !this.sudden ? `<div class="mode-pick">
+      ${d.variants ? `<div class="mode-pick">
         <div class="mode-lbl">${d.variants.label} <small>· bấm vào thẻ, hoặc nút Lên để chuyển</small></div>
         <div class="mode-cards">${d.variants.items.map((v) => {
           const on = v.id === this.api.variant;
@@ -914,20 +648,28 @@ const App = {
             ${on ? '<span class="mcheck">✓</span>' : ''}<span class="mi">${v.icon || '🎮'}</span><b>${v.name}</b></button>`;
         }).join('')}</div>
         <div class="mode-desc2">${(d.variants.items.find((v) => v.id === this.api.variant) || d.variants.items[0]).desc}</div></div>` : ''}
+      ${d.options ? `<div class="opt-rows">${d.options.map((o) => `<div class="mode-pick">
+        <div class="mode-lbl">${o.label}</div>
+        <div class="mode-cards">${o.items.map((v) => {
+          const on = v.id === this.api.opts[o.id];
+          return `<button class="btn mode-card${on ? ' on' : ''}" data-act="opt-set" data-opt="${o.id}" data-val="${v.id}" title="${(v.desc || '').replace(/"/g, '&quot;')}">
+            ${on ? '<span class="mcheck">✓</span>' : ''}<span class="mi">${v.icon || '🎨'}</span><b>${v.name}</b></button>`;
+        }).join('')}</div></div>`).join('')}</div>` : ''}
       ${this.lengthInfo() ? `<p class="tag len-info">Ván này: <b>${this.lengthInfo()}</b></p>` : ''}
-      ${this.sudden ? '<p class="tag choice-legend">Chỉ những người đang hòa điểm cao nhất được vào. Ai thắng được +1 điểm và vô địch!</p>' : ''}
-      ${this.party && !this.sudden && this.party.idx > 0 ? '<p class="tag choice-legend">🎲 Cược: bấm nút Xuống để cược 1 điểm — về nhất được +2, về bét mất điểm cược</p>' : ''}
       ${d.playerChoices ? `<p class="tag choice-legend">${d.playerChoices.items.map((x) => `${x.icon} <b>${x.name}</b>: ${x.desc}`).join(' &nbsp;·&nbsp; ')}</p>` : ''}
       <table class="ctl">
-        <tr><th></th>${this.inst.teamOf ? '<th>Đội</th>' : ''}${d.playerChoices ? `<th>${d.playerChoices.label} (← →)</th>` : ''}${d.looks ? '<th>Phụ kiện (↑)</th>' : ''}<th></th><th>${c.move || 'Di chuyển'}</th>${c.act ? `<th>${c.act}</th>` : ''}${c.jump ? `<th>${c.jump}</th>` : ''}${this.party && !this.sudden ? '<th>Cược</th>' : ''}<th></th></tr>
+        <tr><th></th>${this.inst.teamOf ? `<th>${this.inst.teamLabel || 'Đội'}</th>` : ''}${d.playerChoices ? `<th>${d.playerChoices.label} (← →)</th>` : ''}${d.looks ? '<th>Phụ kiện (↑)</th>' : ''}<th>Ai chơi · mức máy</th><th>${c.move || 'Di chuyển'}</th>${c.act ? `<th>${c.act}</th>` : ''}${c.jump ? `<th>${c.jump}</th>` : ''}<th></th></tr>
         ${rows}
       </table>
       <div class="row">
         <button class="btn" data-act="intro-back">← Đổi game</button>
+        <button class="btn small" data-act="r-add" ${nSeat < max ? '' : 'disabled'}>🤖 + Thêm máy</button>
+        ${benchBtns}
         <button class="btn primary" data-act="go">Bắt đầu luôn (Enter)</button>
       </div>`;
     const els = this.focusables();
-    this.setFocus(els.find((e) => e.classList.contains('primary')) || null, false);
+    const want = focusSel && card.querySelector(focusSel);
+    this.setFocus(want && !want.disabled ? want : els.find((e) => e.classList.contains('primary')) || null, false);
   },
   /** Tóm tắt độ dài ván hiện tại (đọc từ instance game). */
   lengthInfo() {
@@ -974,6 +716,16 @@ const App = {
     Sfx.play('select');
     this.renderIntro();
   },
+  /** đổi tuỳ chọn hiển thị (def.options) — chỉ cập nhật api.opts, game tự đọc lúc vẽ */
+  setOpt(oid, val) {
+    const o = (this.def.options || []).find((x) => x.id === oid);
+    if (!o || !o.items.some((v) => v.id === val)) return;
+    this.api.opts[oid] = val;
+    this.gameOpts = this.gameOpts || {};
+    (this.gameOpts[this.def.id] = this.gameOpts[this.def.id] || {})[oid] = val;
+    try { localStorage.setItem('tronparty.opts', JSON.stringify(this.gameOpts)); } catch (e) { /* bỏ qua */ }
+    this.renderIntro();
+  },
   cycleVariant() {
     const its = this.def.variants && this.def.variants.items;
     if (!its) return;
@@ -987,11 +739,7 @@ const App = {
       if (p.bot) return;
       const q = Input.read(p.src);
       if (!this.ready[i] && q.actP) { this.ready[i] = true; changed = true; Sfx.play('pickup'); }
-      // ALL10: nút Xuống = bật/tắt cược 1 điểm (chỉ trong Chơi tiệc, cần có ít nhất 1 điểm)
-      const down = q.my > 0.5 && Math.abs(q.mx) < 0.5;
-      if (this.party && !this.sudden && down && !this.prevDown[i] && this.party.pts[i] >= 1) { this.bets[i] = !this.bets[i]; changed = true; Sfx.play(this.bets[i] ? 'crown' : 'leave'); }
-      this.prevDown[i] = down;
-      if (this.def.variants && !this.def.looks && !this.sudden) {
+      if (this.def.variants && !this.def.looks) {
         const up = q.my < -0.5 && Math.abs(q.mx) < 0.5;
         if (up && !this.prevUp[i]) variantHit = true;
         this.prevUp[i] = up;
@@ -1001,7 +749,7 @@ const App = {
         if (up && !this.prevUp[i]) { this.looks[i] = (this.looks[i] + 1) % this.def.looks.length; this.lookMem[i] = this.looks[i]; changed = true; Sfx.play('move'); }
         this.prevUp[i] = up;
       }
-      if (this.def.modes && q.jumpP && !this.sudden) modeHit = true;
+      if (this.def.modes && q.jumpP) modeHit = true;
       if (pc) {
         const d = q.mx > 0.5 ? 1 : q.mx < -0.5 ? -1 : 0;
         if (d && d !== this.prevDir[i]) {
@@ -1035,26 +783,9 @@ const App = {
     return res.map((r) => res.filter((o) => o.score > r.score + 1e-9).length);
   },
   showResult() {
-    if (this.sudden) { this.showSuddenResult(); return; }
     const res = this.res, n = this.players.length;
     const place = this.rankOf(res);
-    if (this.party) { this.party.lastPlace = place.slice(); this.party.curse = this.players.map(() => false); }
     const order = this.players.map((_, i) => i).sort((a, b) => place[a] - place[b] || a - b);
-    const worst = Math.max(...place);
-    const mul = this.party && this.party.mul > 1 ? this.party.mul : 1;
-    const betTxt = [];
-    const pts = place.map((p, i) => {
-      let v = (n - 1 - p) * mul;
-      // ALL10: cược — nhất +2, bét mất 1 điểm cược
-      if (this.party && this.bets[i]) {
-        if (p === 0) { v += 2; betTxt[i] = ' 🎲+2'; } else if (p === worst) { v -= 1; betTxt[i] = ' 🎲−1'; } else betTxt[i] = ' 🎲';
-      }
-      return v;
-    });
-    if (this.party) {
-      pts.forEach((v, i) => { this.party.pts[i] = Math.max(0, this.party.pts[i] + v); });
-      this.party.mul = 1; this.party.fastNext = false;
-    }
     const winners = order.filter((i) => place[i] === 0);
     let title = winners.length === 1
       ? `<span style="color:${this.players[winners[0]].color.light}">${this.players[winners[0]].name}</span> thắng!`
@@ -1063,74 +794,32 @@ const App = {
     const medals = ['🥇', '🥈', '🥉', '4'];
     const rows = order.map((i) => {
       const p = this.players[i];
-      const extra = this.party ? `<span class="pts">${pts[i] >= 0 ? '+' : ''}${pts[i]}${betTxt[i] || ''} · ${this.party.pts[i]} đ</span>` : '<span></span>';
       return `<div class="r ${place[i] === 0 ? 'first' : ''}">
         <span class="medal">${medals[place[i]]}</span>${this.blobHTML(p.color, 'sm')}
-        <span class="nm" style="color:${p.color.light}">${p.name}${p.bot ? ' 🤖' : ''}</span>
-        <span class="val">${res[i].text}</span>${extra}</div>`;
+        <span class="nm" style="color:${p.color.light}">${p.name}${p.bot ? ` 🤖 <small>${BOT_LEVELS[p.level || 'normal'].name}</small>` : ''}</span>
+        <span class="val">${res[i].text}</span><span></span></div>`;
     }).join('');
-    let btns;
-    if (this.party) {
-      const last = this.party.idx >= this.party.queue.length - 1;
-      btns = `<button class="btn" data-act="menu">Dừng tiệc</button>
-        <button class="btn primary" data-act="party-next">${last ? 'Xem chung cuộc 🏆' : `Game tiếp theo (${this.party.idx + 2}/${this.party.queue.length}) ▶`}</button>`;
-    } else {
-      btns = `<button class="btn" data-act="menu">Chọn game khác</button>
-        <button class="btn primary" data-act="replay">↻ Chơi lại</button>`;
-    }
     document.getElementById('result-card').innerHTML = `
-      ${this.party ? `<span class="party-tag">🎉 Game ${this.party.idx + 1}/${this.party.queue.length}</span>` : ''}
       <div class="em">🏆</div><h2>${title}</h2>
       <p class="tag">${this.def.name}</p>
       <div class="rank">${rows}</div>
-      <div class="row">${btns}</div>`;
+      <div class="row"><button class="btn" data-act="menu">Chọn game khác</button>
+        <button class="btn primary" data-act="replay">↻ Chơi lại</button></div>`;
     this.state = 'result';
     this.show('s-result');
     this.lock = 0.9;
     Sfx.play('win');
   },
-  showBoard() {
-    const pts = this.party.pts, n = this.players.length;
-    const res = pts.map((v) => ({ score: v }));
-    const place = this.rankOf(res);
-    const order = this.players.map((_, i) => i).sort((a, b) => place[a] - place[b] || a - b);
-    const winners = order.filter((i) => place[i] === 0);
-    const medals = ['🥇', '🥈', '🥉', '4'];
-    const rows = order.map((i) => {
-      const p = this.players[i];
-      return `<div class="r ${place[i] === 0 ? 'first' : ''}">
-        <span class="medal">${medals[place[i]]}</span>${this.blobHTML(p.color, 'sm')}
-        <span class="nm" style="color:${p.color.light}">${p.name}${p.bot ? ' 🤖' : ''}</span>
-        <span class="val"></span><span class="pts">${pts[i]} điểm</span></div>`;
-    }).join('');
-    const title = winners.length === 1
-      ? `Vô địch: <span style="color:${this.players[winners[0]].color.light}">${this.players[winners[0]].name}</span>!`
-      : 'Đồng vô địch!';
-    const sdNote = this.party.sdWin >= 0 ? `<p class="tag">⚔️ ${this.players[this.party.sdWin].name} thắng hiệp phụ quyết tử (+1 điểm)</p>` : '';
-    document.getElementById('board-card').innerHTML = `
-      <div class="em">👑</div><h2>${title}</h2>
-      <p class="tag">Kết quả chung cuộc sau ${this.party.queue.length} game</p>${sdNote}
-      <div class="rank">${rows}</div>
-      <div class="row"><button class="btn" data-act="menu">Về chọn game</button>
-      <button class="btn primary" data-act="party-new">🎉 Tiệc mới</button></div>`;
-    this.state = 'board';
-    this.show('s-board');
-    this.lock = 0.9;
-    Sfx.play('win');
-    void n;
-  },
-
   /* ---------- Vòng lặp ---------- */
   gatherInputs(dt = 1 / 60) {
     const empty = { mx: 0, my: 0, act: false, jump: false, actP: false, jumpP: false };
     return this.players.map((p, i) => {
       let q;
       if (p.bot) {
+        this.api.bot = BOT_LEVELS[p.level || 'normal']; // game cũ đọc api.bot trong botInput → đúng mức của máy này
         const b = Object.assign({}, empty, (this.inst.botInput && this.inst.botInput(i)) || {});
         q = this.def.rawBot ? b : this.weakenBot(p, b, dt);
       } else q = Input.read(p.src);
-      // ALL15: bùa đảo phím — đi ngược hướng cả ván
-      if (this.curse && this.curse[i]) q = Object.assign({}, q, { mx: -q.mx, my: -q.my });
       return q;
     });
   },
@@ -1171,7 +860,7 @@ const App = {
     return null;
   },
   weakenBot(p, b, dt) {
-    const lv = this.api.bot;
+    const lv = BOT_LEVELS[p.level || 'normal'];
     const m = p.mem || (p.mem = { t: 0, mx: 0, my: 0, actCd: 0, jumpCd: 0, wT: 0, wx: 0, wy: 0 });
     m.t -= dt; m.actCd -= dt; m.jumpCd -= dt; m.wT -= dt;
     if (m.t <= 0) { m.t = lv.react * U.rand(0.7, 1.3); m.mx = b.mx; m.my = b.my; }
@@ -1212,14 +901,7 @@ const App = {
         if (m.back && this.lock <= 0) this.action('menu-back');
         break;
       }
-      case 'event': this.updateEvent(dt); break;
       case 'keys': this.updateKeys(dt); break;
-      case 'pboard': this.updatePBoard(dt); break;
-      case 'partyset': {
-        const m = this.menuInput(true);
-        if (m.back && this.lock <= 0) this.action('pset-back');
-        break;
-      }
       case 'intro': this.introInput(); break;
       case 'countdown': {
         this.tauntInput(dt);
@@ -1233,8 +915,15 @@ const App = {
       case 'play': {
         this.goT += dt;
         const m = Input.menu();
-        if (m.back || m.start || Input.hit('KeyP')) {
+        // tay cầm: B là nút Nhảy trong game nên chỉ Start mới tạm dừng; bàn phím: Esc / P
+        if (Input.hit('Escape') || m.start || Input.hit('KeyP')) {
+          const ph = document.getElementById('pause-help');
+          if (ph) ph.innerHTML = this.pauseHelpHTML();
           this.state = 'paused'; this.show('s-pause'); break;
+        }
+        if (Input.hit('KeyH') && this.helpKeyFree()) {
+          this.helpOn = !this.helpOn;
+          try { localStorage.setItem('tronparty.helpbar', this.helpOn ? '1' : '0'); } catch (e) { /* bỏ qua */ }
         }
         this.inst.update(dt * this.speedMul, this.gatherInputs(dt));
         this.api.parts.update(dt);
@@ -1257,8 +946,7 @@ const App = {
         if (m.back && this.lock <= 0) this.action('resume');
         break;
       }
-      case 'result':
-      case 'board': this.menuInput(true); break;
+      case 'result': this.menuInput(true); break;
     }
   },
   render() {
@@ -1273,9 +961,14 @@ const App = {
       this.api.parts.draw(ctx);
     } else {
       this.drawBg(ctx);
-      if (this.state === 'pboard') this.drawPBoard(ctx);
     }
     ctx.restore();
+    if (this.state === 'countdown') this.drawHelpBig(ctx);
+    else if (this.inst && this.state === 'play') {
+      if (this.helpOn) this.drawHelpStrip(ctx);
+      else if (this.goT < HELP_FLOAT_T) this.drawHelpFloat(ctx, Math.min(1, (HELP_FLOAT_T - this.goT) / 1.5));
+      this.drawHelpTag(ctx);
+    }
     if (this.state === 'countdown') {
       const c = Math.ceil(this.cd), age = 1 - (this.cd - Math.floor(this.cd));
       ctx.fillStyle = 'rgba(10,5,25,0.25)'; ctx.fillRect(0, 0, W, H);
@@ -1284,9 +977,156 @@ const App = {
       ctx.globalAlpha = 1 - this.goT / 0.8;
       Draw.banner(ctx, 'Bắt đầu!', this.goT, { size: 110, color: '#5dff9b' });
       ctx.globalAlpha = 1;
-    } else if (this.state === 'ending') {
+    } else if (this.state === 'ending' && !(this.inst && this.inst.ownEndBanner)) { // game cờ tự hiện "Chiếu hết!" / "Hòa!"
       Draw.banner(ctx, 'Kết thúc!', this.endAge, { size: 100, color: '#ffe14d', y: H / 2 - 40 });
     }
+  },
+
+  /* ---------- Bảng phím trong game (cho người mới) ----------
+     Lúc đếm ngược: bảng lớn "Phím của bạn" cho từng người thật.
+     Lúc chơi: dải nhỏ ở mép dưới màn hình (mờ đi khi nhân vật ở sát dưới); phím H để ẩn/hiện. */
+  helpRows() {
+    const d = this.def, md = d && d.modes && d.modes.find((m) => m.id === this.api.mode);
+    const c = (md && md.controls) || d.controls || {};
+    return this.players.map((p, i) => ({ p, i })).filter(({ p }) => !p.bot).map(({ p, i }) => {
+      const lb = srcLabels(p.src);
+      // chữ mũi tên trong luật (vd "← → lái") đổi thành phím thật của người đó (A D lái)
+      let fix = (t) => t;
+      if (p.src && p.src.type === 'kb') {
+        const k = KB_SCHEMES[p.src.scheme].keys, m = { '←': keyName(k.left), '→': keyName(k.right), '↑': keyName(k.up), '↓': keyName(k.down) };
+        fix = (t) => t.replace(/[←→↑↓]/g, (ch) => m[ch]);
+      }
+      const parts = [[lb.move, fix(c.move || 'Di chuyển')]];
+      if (c.act) parts.push([lb.act, fix(c.act)]);
+      if (c.jump) parts.push([lb.jump, fix(c.jump)]);
+      return { p, i, parts };
+    });
+  },
+  helpKeyFree() { return !KB_SCHEMES.some((s) => Object.values(s.keys).includes('KeyH')); },
+  /** đo / vẽ một dòng phím: [tên] [phím] nhãn [phím] nhãn ... — trả về độ rộng */
+  helpLine(ctx, r, x, y, fs, draw) {
+    const font = (w) => `${w} ${fs}px ${FONT}`;
+    let cx = x;
+    const pad = fs * 0.45, kh = fs * 1.45;
+    ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+    // tên người chơi
+    ctx.font = font(800);
+    const nw = ctx.measureText(r.p.name).width;
+    if (draw) {
+      ctx.fillStyle = r.p.color.main; ctx.beginPath(); ctx.arc(cx + fs * 0.5, y, fs * 0.45, 0, TAU); ctx.fill();
+      ctx.fillStyle = r.p.color.light; ctx.fillText(r.p.name, cx + fs * 1.2, y + 1);
+    }
+    cx += fs * 1.2 + nw + fs * 0.7;
+    for (const [key, label] of r.parts) {
+      ctx.font = font(800);
+      const kw = ctx.measureText(key).width + pad * 2;
+      if (draw) {
+        Draw.rr(ctx, cx, y - kh / 2, kw, kh, fs * 0.35);
+        ctx.fillStyle = '#fff'; ctx.fill();
+        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(cx + 3, y + kh / 2 - 3, kw - 6, 3);
+        ctx.fillStyle = '#2a1840'; ctx.fillText(key, cx + pad, y + 1);
+      }
+      cx += kw + fs * 0.35;
+      ctx.font = font(600);
+      const lw = ctx.measureText(label).width;
+      if (draw) { ctx.fillStyle = '#fff'; ctx.fillText(label, cx, y + 1); }
+      cx += lw + fs * 0.9;
+    }
+    return cx - x - fs * 0.9;
+  },
+  /** bảng lớn lúc đếm ngược */
+  drawHelpBig(ctx) {
+    const rows = this.helpRows();
+    if (!rows.length) return;
+    const fs = 22, lh = 46, x0 = 0;
+    const ws = rows.map((r) => this.helpLine(ctx, r, x0, 0, fs, false));
+    const w = Math.max(...ws, 260) + 48, h = rows.length * lh + 58, x = (W - w) / 2, y = H - h - 18;
+    ctx.save();
+    Draw.rr(ctx, x, y, w, h, 18); ctx.fillStyle = 'rgba(16,8,36,0.86)'; ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(255,225,77,0.7)'; ctx.stroke();
+    Draw.text(ctx, '🎮 Phím của bạn', W / 2, y + 26, { size: 22, color: '#ffe14d', stroke: null });
+    rows.forEach((r, k) => this.helpLine(ctx, r, x + 24, y + 62 + k * lh, fs, true));
+    ctx.restore();
+  },
+  /** dải nhỏ lúc chơi */
+  drawHelpStrip(ctx) {
+    const rows = this.helpRows();
+    if (!rows.length) return;
+    // cỡ chữ: một hàng nếu vừa, không thì 2 hàng, chữ nhỏ dần
+    let fs = 16, lines;
+    for (; fs >= 11; fs--) {
+      const ws = rows.map((r) => this.helpLine(ctx, r, 0, 0, fs, false) + fs * 1.6);
+      const one = ws.reduce((a, b) => a + b, 0) + 8 * (rows.length - 1);
+      if (one <= W - 24) { lines = [rows]; break; }
+      const half = Math.ceil(rows.length / 2), a = rows.slice(0, half), b = rows.slice(half);
+      const wa = ws.slice(0, half).reduce((s, v) => s + v, 0), wb = ws.slice(half).reduce((s, v) => s + v, 0);
+      if (Math.max(wa, wb) + 8 <= W - 24) { lines = [a, b]; break; }
+    }
+    if (!lines) lines = rows.map((r) => [r]);
+    const ph = fs * 2.1, gap = 6;
+    ctx.save();
+    lines.forEach((line, li) => {
+      const ws = line.map((r) => this.helpLine(ctx, r, 0, 0, fs, false) + fs * 1.6);
+      const total = ws.reduce((a, b) => a + b, 0) + 8 * (line.length - 1);
+      let x = (W - total) / 2;
+      const y = H - 6 - ph / 2 - (lines.length - 1 - li) * (ph + gap) - 16;
+      line.forEach((r, k) => {
+        // nhân vật đứng sát chỗ dải chữ thì làm mờ để khỏi che
+        let near = false;
+        this.players.forEach((_, j) => { const q = this.posOf(j); if (q && q.x > x - 30 && q.x < x + ws[k] + 30 && q.y > y - ph - 40) near = true; });
+        ctx.globalAlpha = near ? 0.28 : 0.92;
+        Draw.rr(ctx, x, y - ph / 2, ws[k], ph, ph / 2);
+        ctx.fillStyle = 'rgba(16,8,36,0.78)'; ctx.fill();
+        ctx.lineWidth = 2; ctx.strokeStyle = r.p.color.main; ctx.stroke();
+        this.helpLine(ctx, r, x + fs * 0.8, y, fs, true);
+        x += ws[k] + 8;
+      });
+    });
+    ctx.restore();
+  },
+  /** nhãn phím nhỏ đi theo nhân vật mỗi người thật trong vài giây đầu ván */
+  drawHelpFloat(ctx, alpha) {
+    const fs = 14, ph = fs * 2;
+    ctx.save();
+    // vị trí mong muốn: ngay dưới nhân vật (sát đáy thì lên trên); nhãn chồng nhau thì đẩy lệch ra
+    const items = [];
+    for (const r of this.helpRows()) {
+      const q = this.posOf(r.i);
+      if (!q) continue;
+      const w = this.helpLine(ctx, r, 0, 0, fs, false) + fs * 1.6;
+      const below = q.y + 44 + ph < H - 10;
+      items.push({ r, w, x: U.clamp(q.x - w / 2, 6, W - 6 - w), y: below ? q.y + 44 + ph / 2 : q.y - 58 - ph / 2, dir: below ? 1 : -1 });
+    }
+    items.sort((a, c) => a.y - c.y);
+    const placed = [];
+    for (const it of items) {
+      for (let k = 0; k < 6 && placed.some((o) => it.x < o.x + o.w && o.x < it.x + it.w && Math.abs(it.y - o.y) < ph + 3); k++) {
+        it.y += it.dir * (ph + 4);
+        if (it.y > H - 24 - ph / 2 || it.y < 70) { it.dir = -it.dir; it.y += it.dir * 2 * (ph + 4); }
+      }
+      placed.push(it);
+    }
+    for (const { r, w, x, y } of placed) {
+      ctx.globalAlpha = alpha * 0.95;
+      Draw.rr(ctx, x, y - ph / 2, w, ph, ph / 2);
+      ctx.fillStyle = 'rgba(16,8,36,0.82)'; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = r.p.color.main; ctx.stroke();
+      this.helpLine(ctx, r, x + fs * 0.8, y, fs, true);
+    }
+    ctx.restore();
+  },
+  /** dòng chữ nhỏ cuối màn hình: cách xem lại phím */
+  drawHelpTag(ctx) {
+    if (!this.helpRows().length) return;
+    const t = `Esc: tạm dừng (xem phím)${this.helpKeyFree() ? ` · H: ${this.helpOn ? 'ẩn' : 'hiện'} bảng phím` : ''}${this.def.helpExtra ? ' · ' + this.def.helpExtra : ''}`;
+    ctx.save(); ctx.globalAlpha = 0.6;
+    Draw.text(ctx, t, W / 2, H - 8, { size: 12, color: '#fff', stroke: 'rgba(0,0,0,0.7)', sw: 3, weight: 600 });
+    ctx.restore();
+  },
+  pauseHelpHTML() {
+    const rows = this.helpRows();
+    if (!rows.length) return '';
+    return `<table class="ctl help-tb">${rows.map((r) => `<tr><td><span class="who">${this.blobHTML(r.p.color, 'sm')} ${r.p.name}</span></td>${r.parts.map(([k, l]) => `<td><kbd>${k}</kbd> ${l}</td>`).join('')}</tr>`).join('')}</table>`;
   },
 
   /* ---------- Nền động cho menu ---------- */

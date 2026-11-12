@@ -51,9 +51,8 @@
       this.q = this.mode === 'math' ? mathQ(this.k) : colorQ(this.k);
       this.phase = 'ask'; this.qMax = this.qT = Math.max(3, 5.5 - this.k * 0.2);
       this.lastTick = 99;
-      const lv = this.api.bot;
-      const pc = 0.93 - lv.actDrop * 0.75;
-      this.bot.forEach((b) => {
+      this.bot.forEach((b, j) => {
+        const lv = this.api.botOf(j), pc = 0.93 - lv.actDrop * 0.75;
         const m = this.q.labels.length;
         b.target = Math.random() < pc ? this.q.correct : U.randi(0, m - 1);
         b.delay = U.rand(0.4, 1.3) + lv.react * 2;
@@ -214,7 +213,7 @@
       // Đố Toán: có người chiếm cửa mình muốn vào → húc họ ra (khi cửa giới hạn chỗ thì húc hăng hơn)
       if (this.mode === 'math' && p.dashCd <= 0) {
         const foe = this.ps.find((q, j) => j !== i && !q.out && Math.abs(q.x - p.x) < 60 && Math.abs(q.x - tx) < DOOR_W / 2);
-        if (foe && Math.random() < (this.cap ? 0.06 : 0.015) * (1 - this.api.bot.actDrop)) { o.mx = Math.sign(foe.x - p.x) || 1; o.actP = true; }
+        if (foe && Math.random() < (this.cap ? 0.06 : 0.015) * (1 - this.api.botOf(i).actDrop)) { o.mx = Math.sign(foe.x - p.x) || 1; o.actP = true; }
       }
       return o;
     }

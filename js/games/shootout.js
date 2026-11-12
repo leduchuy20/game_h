@@ -51,8 +51,6 @@
       this.idx = [0, 0];            // lượt sút thứ mấy của mỗi đội (để xoay người sút)
       this.first = Math.random() < 0.5 ? 0 : 1;
       this.stats = this.P.map(() => ({ goals: 0, shots: 0, saves: 0 }));
-      const L = this.api.bot || {};
-      this.lvl = L.actDrop > 0.4 ? 0 : L.actDrop > 0.1 ? 1 : 2;
       this.finished = false; this.winner = -1; this.endT = 0;
       this.bannerT = 9; this.bannerText = ''; this.bannerColor = '#fff';
       this.t = 0; this.netB = 0; this.flash = 0;
@@ -60,6 +58,8 @@
       this.banner(`🪙 Bốc thăm: ${TEAMS.names[this.first]} đá trước`, TEAMS.colors[this.first]);
     }
     teamOf(i) { return this.team[i]; }
+    /** mức máy của người i: 0 Dễ, 1 Trung bình, 2 Khó (mỗi máy một mức) */
+    lv(i) { const L = this.api.botOf(i) || {}; return L.actDrop > 0.4 ? 0 : L.actDrop > 0.1 ? 1 : 2; }
     banner(s, c) { this.bannerText = s; this.bannerColor = c || '#fff'; this.bannerT = 0; }
     goals(t) { return this.rec[t].filter(Boolean).length; }
 
@@ -100,8 +100,9 @@
 
     /* ---------- máy ---------- */
     planBot() {
-      const k = this.k, L = this.lvl, o = {};
+      const k = this.k, o = {};
       if (this.P[k.shooter].bot) {
+        const L = this.lv(k.shooter);
         const r = Math.random();
         const mx = r < 0.42 ? -1 : r < 0.84 ? 1 : r < 0.89 ? -0.6 : r < 0.94 ? 0.6 : 0;
         const r2 = Math.random(), my = r2 < 0.28 ? -1 : r2 < 0.62 ? 0 : 1;
@@ -113,6 +114,7 @@
         if (!o.shoot.chip && mx !== 0 && Math.random() < BOT.feint[L]) o.shoot.feint = { tx: tx(-mx), ty: ty(my) };
       }
       if (this.P[k.keeper].bot) {
+        const L = this.lv(k.keeper);
         o.keep = { sway: 0, swayT: 0 };
         if (Math.random() < BOT.guess[L]) { // đoán trước lúc chạy đà
           const r = Math.random();
@@ -148,7 +150,7 @@
       if (k.dive) return o;
       if (b.guess && k.phase === 'run' && RUN_T - k.t >= b.guess.at) { o.jumpP = true; o.mx = b.guess.dx; o.my = b.guess.dy; return o; }
       if (b.react !== undefined && k.phase === 'fly' && k.shot.t >= b.react) {
-        const S = k.shot, L = this.lvl;
+        const S = k.shot, L = this.lv(k.keeper);
         let dx = Math.abs(S.tx - k.kx) < 70 ? 0 : Math.sign(S.tx - k.kx);
         if (Math.random() > BOT.acc[L]) dx = dx === 0 ? (Math.random() < 0.5 ? -1 : 1) : (Math.random() < 0.6 ? -dx : 0);
         let dy = S.ty < CB + 80 ? -1 : S.ty > GG - 55 ? 1 : 0;
@@ -201,7 +203,7 @@
       let sig, dur, arc;
       if (k.chip) { sig = 20 + 10 * k.pressure; dur = 1.0; arc = 170; }
       else { sig = this.spread(pw); dur = 0.95 - 0.53 * p1; arc = 34 * (1 - p1) + 8; }
-      if (this.P[k.shooter].bot) sig += BOT.err[this.lvl];
+      if (this.P[k.shooter].bot) sig += BOT.err[this.lv(k.shooter)];
       const tx = A.x + gauss() * sig, ty = A.y + gauss() * sig * 0.8;
       k.shot = { tx, ty, dur, arc, chip: k.chip, pw, t: 0, x0: SPOT.x, y0: SPOT.y };
       this.stats[k.shooter].shots++;

@@ -27,13 +27,14 @@ const URL = 'file://' + path.join(ROOT, 'index.html').replace(/\\/g, '/');
 
   const report = await page.evaluate(([only, len]) => {
     App.lenLevel = len;
+    // game cờ: máy nghĩ ngay trên luồng chính (vòng test chạy đồng bộ, không chờ được Web Worker)
+    if (typeof BoardKit !== 'undefined') BoardKit.sync = true;
     const out = [];
     const games = Party.games.filter((g) => !only.length || only.includes(g.id));
     for (const level of ['easy', 'hard']) {
       for (const n of [2, 4]) {
-        App.botLevel = level;
-        App.slots = [0, 1, 2, 3].map((i) => (i < n ? App.makePlayer(i, null, true) : null));
-        App.players = App.slots.filter(Boolean);
+        // toàn máy cùng mức (đội hình đưa thẳng vào startGame — mỗi máy có thể một mức riêng)
+        const seats = Array.from({ length: n }, () => ({ bot: true, level }));
         for (const def of games) {
           if (n < (def.minPlayers || 2) || n > (def.maxPlayers || 4)) continue;
           for (const mode of (def.modes ? def.modes.map((m) => m.id) : [null])) {
@@ -41,7 +42,7 @@ const URL = 'file://' + path.join(ROOT, 'index.html').replace(/\\/g, '/');
           const t0 = performance.now();
           let err = null, steps = 0, posOk = 0, posNull = 0;
           try {
-            App.startGame(def); App.hideAll(); App.state = 'play';
+            App.startGame(def, { seats }); App.hideAll(); App.state = 'play';
             while (!App.inst.finished && steps < 60 * 240) {
               App.inst.update(1 / 60, App.gatherInputs());
               App.api.parts.update(1 / 60);
@@ -78,9 +79,10 @@ const URL = 'file://' + path.join(ROOT, 'index.html').replace(/\\/g, '/');
     const dir = path.join(__dirname, 'shots');
     fs.mkdirSync(dir, { recursive: true });
     const ids = await page.evaluate((only) => Party.games.filter((g) => !only.length || only.includes(g.id)).map((g) => g.id), ONLY);
-    await page.evaluate(() => { App.botLevel = 'normal'; App.slots = [0, 1, 2, 3].map((i) => App.makePlayer(i, null, true)); App.players = App.slots.slice(); App.openMenu(); });
+    await page.evaluate(() => { if (typeof BoardKit !== 'undefined') BoardKit.sync = false; App.slots = [null, null, null, null]; App.openMenu(); });
     for (const id of ids) {
-      await page.evaluate((id) => App.action('pick', { dataset: { id } }), id);
+      // 4 máy Trung bình (hoặc tối đa số người của game)
+      await page.evaluate((id) => { const d = Party.games.find((g) => g.id === id); App.startGame(d, { seats: Array.from({ length: d.maxPlayers || 4 }, () => ({ bot: true, level: 'normal' })) }); }, id);
       await page.waitForTimeout(200);
       await page.evaluate(() => App.beginCountdown());
       await page.waitForTimeout(3000 + 5000);

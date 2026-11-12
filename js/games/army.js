@@ -4,6 +4,7 @@
 (() => {
   const AX = 40, AY = 84, AW = W - 80, AH = H - 84 - 20;
   const GAME_TIME = 60, FREE_TARGET = 34, SPACING = 24;
+  const GIANT_NEED = 10, GIANT_T = 5;   // ARM5: từ 10 quân trở lên, bấm Nhảy hoá Tròn khổng lồ 5 giây
   const GRAY = { main: '#b9b3cc', dark: '#7c7695', light: '#f1eff7' };
   const BLOCKS = [
     { x: 250, y: 200, w: 150, h: 90 }, { x: W - 400, y: 200, w: 150, h: 90 },
@@ -17,7 +18,7 @@
       this.api = api; this.P = api.players; this.n = this.P.length;
       this.time = this.total = api.T(GAME_TIME); this.finished = false;
       this.ps = this.P.map((p, i) => ({ x: SPAWN[i][0], y: SPAWN[i][1], vx: 0, vy: 0, r: 24, face: 0, walk: 0,
-        dashT: 0, dashCd: 0, squash: 0, skip: false, trail: [], troops: [], stealCd: 0 }));
+        dashT: 0, dashCd: 0, squash: 0, skip: false, trail: [], troops: [], stealCd: 0, giant: 0, giantCd: 0, bumpCd: 0 }));
       this.free = [];
       for (let k = 0; k < FREE_TARGET; k++) this.spawnFree();
       this.bot = this.P.map(() => ({}));
@@ -52,7 +53,14 @@
       if (!this.finished) { this.time -= dt; if (this.time <= 0) { this.time = 0; this.finished = true; } }
       this.ps.forEach((p, i) => {
         const q = inp[i];
-        p.dashT -= dt; p.dashCd -= dt; p.stealCd -= dt;
+        p.dashT -= dt; p.dashCd -= dt; p.stealCd -= dt; p.giantCd -= dt; p.bumpCd -= dt;
+        // ARM5: đủ quân thì hợp thể thành Tròn khổng lồ
+        if (q.jumpP && p.giant <= 0 && p.giantCd <= 0 && p.troops.length >= GIANT_NEED && !this.finished) {
+          p.giant = GIANT_T; p.giantCd = GIANT_T + 10; Sfx.play('boom'); FX.shake(8);
+          parts.text(p.x, p.y - 70, 'HỢP THỂ!', this.P[i].color.light, 34);
+          parts.burst(p.x, p.y, [this.P[i].color.main, '#fff'], 30, 320, 0.6, 7);
+        }
+        if (p.giant > 0) { p.giant -= dt; p.r = 24 + 30 * Math.min(1, p.giant * 3, (GIANT_T - p.giant) * 4); if (p.giant <= 0) p.r = 24; }
         p.squash *= Math.pow(0.01, dt);
         if (q.mx || q.my) { p.face = Math.atan2(q.my, q.mx); p.walk += dt * 14; }
         if (q.actP && p.dashCd <= 0 && !this.finished) {
@@ -60,7 +68,7 @@
           p.vx = Math.cos(p.face) * 620; p.vy = Math.sin(p.face) * 620;
         }
         if (p.dashT <= 0) {
-          const sp = Math.max(200, 270 - p.troops.length * 2), k = Math.min(1, dt * 10);
+          const sp = p.giant > 0 ? 300 : Math.max(200, 270 - p.troops.length * 2), k = Math.min(1, dt * 10);
           p.vx += (q.mx * sp - p.vx) * k; p.vy += (q.my * sp - p.vy) * k;
         }
         p.x += p.vx * dt; p.y += p.vy * dt;
@@ -81,6 +89,21 @@
       });
       Phys.separate(this.ps, 0.6);
       if (this.finished) return;
+      // Tròn khổng lồ húc ai thì người đó văng ra và rơi mất nửa số quân (thành người xám)
+      this.ps.forEach((p, i) => {
+        if (p.giant <= 0) return;
+        this.ps.forEach((o, j) => {
+          if (j === i || o.bumpCd > 0 || o.giant > 0) return;
+          const dx = o.x - p.x, dy = o.y - p.y, d = Math.hypot(dx, dy) || 1;
+          if (d < p.r + o.r + 6) {
+            o.vx = dx / d * 760; o.vy = dy / d * 760; o.dashT = 0.2; o.bumpCd = 1;
+            const lost = o.troops.splice(Math.floor(o.troops.length / 2));
+            lost.forEach((t) => this.free.push({ x: t.x, y: t.y, dir: U.rand(0, TAU), t: U.rand(0.5, 1.5), walk: 0, pop: 1 }));
+            Sfx.play('hit'); FX.shake(8); Party.rumble(j, 0.8, 250);
+            if (lost.length) parts.text(o.x, o.y - 40, `Tan đội hình −${lost.length}`, '#ffb36b', 24);
+          }
+        });
+      });
 
       // chiêu mộ người xám
       this.ps.forEach((p, i) => {
@@ -97,12 +120,12 @@
       this.ps.forEach((p, i) => {
         if (p.stealCd > 0) return;
         for (let j = 0; j < this.n; j++) {
-          if (j === i) continue;
+          if (j === i || this.ps[j].giant > 0) continue;
           const o = this.ps[j];
           const k = o.troops.findIndex((t) => Math.hypot(t.x - p.x, t.y - p.y) < p.r + 16);
           if (k < 0) continue;
           // lao vào thì cướp cả đoạn phía sau, đi bộ thì cướp 1 người
-          const take = p.dashT > 0 ? o.troops.length - k : 1;
+          const take = p.dashT > 0 || p.giant > 0 ? o.troops.length - k : 1;
           const got = o.troops.splice(k, take);
           got.forEach((t) => { t.pop = 1; p.troops.push(t); });
           p.stealCd = 0.9;
@@ -142,12 +165,14 @@
       const order = this.ps.map((_, i) => i).sort((a, b) => this.ps[a].y - this.ps[b].y);
       for (const i of order) {
         const p = this.ps[i], c = this.P[i].color;
-        for (let k = p.troops.length - 1; k >= 0; k--) {
+        for (let k = p.giant > 0 ? -1 : p.troops.length - 1; k >= 0; k--) {
           const t = p.troops[k];
           Draw.blob(ctx, { x: t.x, y: t.y, r: 14, color: { main: c.light, dark: c.main, light: '#fff' }, face: p.face, walk: t.walk, scale: 1 + t.pop * 0.3 });
         }
         Draw.blob(ctx, { x: p.x, y: p.y, r: p.r, color: c, face: p.face, walk: p.walk, squash: p.squash });
         Draw.text(ctx, String(p.troops.length), p.x, p.y - p.r - 16, { size: 20, color: c.light, sw: 4 });
+        if (p.giant > 0) { ctx.strokeStyle = `rgba(255,255,255,${0.4 + 0.3 * Math.sin(U.now() * 12)})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 8, 0, TAU); ctx.stroke(); }
+        else if (p.troops.length >= GIANT_NEED && p.giantCd <= 0 && !this.P[i].bot) Draw.text(ctx, 'Nhảy: hợp thể!', p.x, p.y + p.r + 16, { size: 14, color: '#ffe14d', sw: 3 });
       }
       const counts = this.ps.map((p) => p.troops.length);
       const lead = counts.indexOf(Math.max(...counts));
@@ -159,7 +184,15 @@
 
     botInput(i) {
       const p = this.ps[i];
-      const o = { mx: 0, my: 0, actP: false };
+      const o = { mx: 0, my: 0, actP: false, jumpP: false };
+      if (p.troops.length >= GIANT_NEED && p.giantCd <= 0 && p.giant <= 0
+        && this.ps.some((q, j) => j !== i && q.troops.length >= 4 && Math.hypot(q.x - p.x, q.y - p.y) < 320) && Math.random() < 0.05) o.jumpP = true;
+      // đang khổng lồ: lao vào người có nhiều quân nhất
+      if (p.giant > 0) {
+        let best = null, bq = -1;
+        this.ps.forEach((q, j) => { if (j !== i && q.troops.length > bq) { bq = q.troops.length; best = q; } });
+        if (best) { const dx = best.x - p.x, dy = best.y - p.y, d = Math.hypot(dx, dy) || 1; o.mx = dx / d; o.my = dy / d; return o; }
+      }
       let tx = null, ty = null, bd = Infinity, isFoe = false;
       for (const f of this.free) {
         const d = Math.hypot(f.x - p.x, f.y - p.y);
@@ -189,8 +222,8 @@
   Party.register({
     id: 'army', name: 'Đội Quân', emoji: '👥', cat: 'collect',
     tagline: 'Gom người xám vào đội, cướp quân của nhau · đông quân nhất là thắng',
-    how: 'Chạm vào người xám để họ đi theo bạn. Chạm vào quân đang theo người khác để cướp 1 người — lao tới (nút Đánh) thì cướp cả đoạn phía sau! Đội càng dài chạy càng chậm.',
-    controls: { move: 'Dẫn đội', act: 'Lao tới cướp quân' },
+    how: 'Chạm vào người xám để họ đi theo bạn. Chạm vào quân đang theo người khác để cướp 1 người — lao tới (nút Đánh) thì cướp cả đoạn phía sau! Đội càng dài chạy càng chậm. Có từ 10 quân trở lên thì bấm Nhảy để HỢP THỂ thành Tròn khổng lồ vài giây: húc ai người đó văng ra và rơi mất nửa số quân.',
+    controls: { move: 'Dẫn đội', act: 'Lao tới cướp quân', jump: 'Hợp thể (≥10 quân)' },
     minPlayers: 2, maxPlayers: 4,
     create: (api) => new Army(api),
   });

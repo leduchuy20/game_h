@@ -1,0 +1,7 @@
+{
+  "name": "tron-party",
+  "productName": "Tròn Party",
+  "version": "1.0.0",
+  "description": "Bộ mini-game party 2–4 người chơi chung một máy",
+  "main": "main.js"
+}

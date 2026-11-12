@@ -979,7 +979,7 @@ const PushKit = (() => {
     }
 
     botInput(i) {
-      const b = this.bodies[i], st = this.bot[i], lv = this.api.bot;
+      const b = this.bodies[i], st = this.bot[i], lv = this.api.botOf(i);
       const o = { mx: 0, my: 0, act: false, jump: false, actP: false, jumpP: false };
       if (this.freeze > 0) return o;
       if (this.mode === 'train' && this.dummy[i]) return o;

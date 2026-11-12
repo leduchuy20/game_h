@@ -56,12 +56,12 @@
       if (this.round > this.qn) { this.finished = true; return; }
       this.shape = this.order[(this.round - 1) % this.order.length];
       this.phase = 'show'; this.t = SHOW_T;
-      this.ps.forEach((p, i) => { p.cells.fill(false); p.cx = G / 2; p.cy = G / 2; p.pct = 0; p.bot = this.P[i].bot ? this.planBot() : null; });
+      this.ps.forEach((p, i) => { p.cells.fill(false); p.cx = G / 2; p.cy = G / 2; p.pct = 0; p.bot = this.P[i].bot ? this.planBot(i) : null; });
     }
 
     /** máy vẽ theo trí nhớ: nhớ sai vài ô tuỳ mức */
-    planBot() {
-      const lv = this.api.bot, miss = lv.actDrop > 0.4 ? 0.3 : lv.actDrop > 0.1 ? 0.17 : 0.07;
+    planBot(i) {
+      const lv = this.api.botOf(i), miss = lv.actDrop > 0.4 ? 0.3 : lv.actDrop > 0.1 ? 0.17 : 0.07;
       const want = this.shape.cells.map((v) => (Math.random() < miss ? !v : v));
       // lệch cả hình một ô đôi khi
       const sh = Math.random() < miss ? [U.randi(-1, 1), U.randi(-1, 1)] : [0, 0];

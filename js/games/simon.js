@@ -25,8 +25,7 @@
       this.step = Math.max(0.42, 0.85 - this.round * 0.035);
       this.showT = this.step;
       this.ps.forEach((p) => { p.prog = 0; p.done = false; p.last = -1; });
-      const lv = this.api.bot;
-      this.bot.forEach((b) => { b.t = U.rand(0.5, 0.9) + lv.react * 2; b.pressing = -1; });
+      this.bot.forEach((b, j) => { b.t = U.rand(0.5, 0.9) + this.api.botOf(j).react * 2; b.pressing = -1; });
     }
 
     symOf(q, p) {
@@ -160,7 +159,7 @@
     posOf(i) { return { x: 150, y: 400 + i * Math.min(70, 260 / this.n) }; }
 
     botInput(i) {
-      const p = this.ps[i], st = this.bot[i], lv = this.api.bot;
+      const p = this.ps[i], st = this.bot[i], lv = this.api.botOf(i);
       const o = { mx: 0, my: 0, actP: false, jumpP: false };
       if (this.phase !== 'input' || !p.alive || p.done) return o;
       st.t -= 1 / 60;

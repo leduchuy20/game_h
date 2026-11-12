@@ -51,7 +51,7 @@
 
     /** máy chọn Chia / Cướp — mức Khó chơi "ăn miếng trả miếng", mức Dễ gần như ngẫu nhiên */
     botPlan(i, j, c) {
-      const lv = this.api.bot, me = this.ps[i], last = me.hist[j];
+      const lv = this.api.botOf(i), me = this.ps[i], last = me.hist[j];
       let steal;
       if (lv.actDrop > 0.4) steal = Math.random() < 0.45;
       else {

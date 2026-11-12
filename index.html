@@ -35,15 +35,13 @@
       <!-- Sảnh chờ: ghép người chơi -->
       <section class="screen" id="s-lobby">
         <h2>Ai chơi nào?</h2>
-        <p class="hint">Bấm <b>＋ Người chơi</b> hoặc <b>🤖 Máy</b> ở ô trống để thêm — hoặc nhấn <b>nút Đánh</b> trong bộ phím của bạn để vào ngay.<br>
+        <p class="hint">Bấm <b>＋ Người chơi</b> ở ô trống — hoặc nhấn <b>nút Đánh</b> trong bộ phím của bạn để vào ngay. Thêm máy và chọn độ khó ở màn giới thiệu của từng game.<br>
           <small>Bấm vào <b>tên</b> để đổi tên · bấm <b>hình Tròn</b> để đổi màu · <b>✕</b> để xoá (hoặc giữ nút Nhảy 1 giây)</small></p>
         <div class="slots" id="slots"></div>
         <div class="schemes" id="schemes"></div>
         <p class="hint small kb-live" id="kb-live"></p>
         <div class="row">
           <button class="btn" data-act="lobby-back">← Quay lại</button>
-          <button class="btn" data-act="add-bot" id="btn-add-bot">🤖 + Thêm máy</button>
-          <button class="btn" data-act="bot-level" id="btn-bot-level">🟡 Máy: Trung bình</button>
           <button class="btn" data-act="len-level" id="btn-len-level">⏱ Ván: Vừa</button>
           <button class="btn" data-act="speed" id="btn-speed">🐢 Tốc độ thường</button>
           <button class="btn" data-act="keys">⌨️ Đổi phím</button>
@@ -62,26 +60,14 @@
         </div>
       </section>
 
-      <!-- Vòng quay sự kiện giữa các game -->
-      <section class="screen overlay" id="s-event"><div class="card" id="event-card"></div></section>
-
       <!-- Đổi phím (ALL14) -->
       <section class="screen overlay" id="s-keys"><div class="card" id="keys-card"></div></section>
-
-      <!-- Bàn cờ Chơi tiệc (ALL15): bàn vẽ trên canvas, nhật ký + nút ở dưới -->
-      <section class="screen bottom" id="s-pboard"><div class="card pboard" id="pboard-card"></div></section>
-
-      <!-- Chơi tiệc tự chọn -->
-      <section class="screen overlay" id="s-partyset"><div class="card" id="pset-card"></div></section>
 
       <!-- Giới thiệu game + sẵn sàng -->
       <section class="screen overlay" id="s-intro"><div class="card" id="intro-card"></div></section>
 
       <!-- Kết quả -->
       <section class="screen overlay" id="s-result"><div class="card" id="result-card"></div></section>
-
-      <!-- Kết quả chung cuộc chế độ tiệc -->
-      <section class="screen overlay" id="s-board"><div class="card" id="board-card"></div></section>
 
       <!-- Tạm dừng -->
       <section class="screen overlay" id="s-pause">
@@ -92,6 +78,7 @@
             <button class="btn" data-act="restart">↻ Chơi lại game này</button>
             <button class="btn" data-act="quit">⌂ Về chọn game</button>
           </div>
+          <div id="pause-help"></div>
         </div>
       </section>
 
@@ -145,6 +132,11 @@
   <script src="js/games/combo.js"></script>
   <script src="js/games/sketch.js"></script>
   <script src="js/games/moving.js"></script>
+  <script src="js/games/board_base.js"></script>
+  <script src="js/games/chess_engine.js"></script>
+  <script src="js/games/chess.js"></script>
+  <script src="js/games/xiangqi_engine.js"></script>
+  <script src="js/games/xiangqi.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

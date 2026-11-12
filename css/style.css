@@ -189,6 +189,12 @@ kbd {
 .mode-card b { font-size: 16px; white-space: nowrap; }
 .mode-card.on { opacity: 1; border-color: #ffe14d; background: rgba(255,225,77,0.18); transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,0.25); }
 .mode-card.on b { color: #ffe14d; }
+.btn.mode-card { font-size: 16px; font-weight: 400; color: #fff; background: rgba(255,255,255,0.07); border: 3px solid rgba(255,255,255,0.16);
+  border-radius: 14px; padding: 6px 16px 6px 10px; box-shadow: none; }
+.btn.mode-card.on { background: rgba(255,225,77,0.18); border-color: #ffe14d; box-shadow: 0 5px 0 rgba(0,0,0,0.25); }
+.btn.mode-card.focus { outline: 3px solid #fff; outline-offset: 2px; }
+.opt-rows { display: flex; gap: 26px; justify-content: center; flex-wrap: wrap; width: 100%; }
+.opt-rows .mode-pick { width: auto; }
 .mode-desc2 { margin-top: 7px; font-size: 14.5px; line-height: 1.3; opacity: .9; text-align: center; }
 .mcheck { position: absolute; top: -10px; right: -10px; width: 22px; height: 22px; border-radius: 50%;
   background: #ffe14d; color: #2a1840; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center;
@@ -260,3 +266,27 @@ td.bet small { color: #fff; opacity: .6; font-weight: 600; }
 .slot .leavebar.on { opacity: 1; }
 .slot .leavebar i { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: #e8405a; }
 .slot .leavebar span { position: relative; font-size: 11px; line-height: 16px; display: block; }
+
+/* đội hình ở màn giới thiệu: mức từng máy + nút nhỏ */
+td.whoctl { white-space: nowrap; }
+.lvpick { display: inline-flex; gap: 3px; vertical-align: middle; }
+.btn.lv { font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 9px; background: rgba(255,255,255,.12); color: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.3); opacity: .7; }
+.btn.lv.on { opacity: 1; color: #2a1840; }
+.btn.lv.lv-easy.on { background: #5dff9b; }
+.btn.lv.lv-normal.on { background: #ffe14d; }
+.btn.lv.lv-hard.on { background: #ff6b6b; }
+.btn.xs { font-size: 13px; padding: 2px 7px; border-radius: 9px; margin-left: 4px; background: rgba(255,255,255,.14); color: #fff; box-shadow: 0 2px 0 rgba(0,0,0,.3); vertical-align: middle; }
+.btn.lv:hover, .btn.xs:hover, .btn.lv.focus, .btn.xs.focus { transform: none; }
+.btn.lv.focus, .btn.xs.focus { outline: 3px solid #ffe14d; outline-offset: 1px; }
+.result-card .nm small, .rank .nm small { font-size: 12px; opacity: .7; }
+.intro-tags { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.who { white-space: nowrap; }
+table.ctl td.ready { white-space: nowrap; }
+.card.compact table.ctl th { font-size: 13px; padding: 0 8px; max-width: 150px; line-height: 1.15; }
+.card.compact table.ctl td { padding: 4px 9px; }
+.card.compact .tag { font-size: 15.5px; line-height: 1.3; }
+.card.compact .em { display: none; }
+#intro-card .btn.small { font-size: 16px; padding: 6px 14px; border-radius: 14px; }
+#pause-help { margin-top: 6px; }
+.help-tb { font-size: 16px !important; }
+.help-tb td { white-space: nowrap; }

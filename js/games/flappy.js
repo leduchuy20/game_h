@@ -129,7 +129,7 @@
     }
 
     botInput(i) {
-      const p = this.ps[i], st = this.bot[i], lv = this.api.bot;
+      const p = this.ps[i], st = this.bot[i], lv = this.api.botOf(i);
       const o = { mx: 0, jumpP: false };
       if (p.out) return o;
       st.t -= 1 / 60;

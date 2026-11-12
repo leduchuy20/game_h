@@ -31,9 +31,9 @@
       this.phase = 'show'; this.phaseT = SHOW + len * 0.3;
       this.roundT = 0; this.limit = 9 + len * 2.5; this.delivered = 0;
       this.ps.forEach((p) => { p.cup = []; p.done = false; });
-      const lv = this.api.bot;
       // máy "nhớ" đơn — máy càng dễ càng hay nhớ sai một món
-      this.bot.forEach((b) => {
+      this.bot.forEach((b, j) => {
+        const lv = this.api.botOf(j);
         const plan = this.order.slice();
         if (Math.random() < lv.actDrop * 0.8) plan[U.randi(0, plan.length - 1)] = U.randi(0, TOPS.length - 1);
         b.plan = plan; b.wait = U.rand(0.2, 0.8) + lv.react * 2;

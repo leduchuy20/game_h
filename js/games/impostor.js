@@ -217,7 +217,7 @@
         for (const b of this.bodies) {
           if (!b.alive) continue;
           const onSt = this.stations.some((s) => Math.hypot(s[0] - b.x, s[1] - b.y) < 30);
-          b.sus = Math.max(0, b.sus + (b.task > 0.3 ? 3 : onSt ? 0.6 : -0.4) * (1 - this.api.bot.actDrop * 0.8) / 60);
+          b.sus = Math.max(0, b.sus + (b.task > 0.3 ? 3 : onSt ? 0.6 : -0.4) * (1 - this.api.botOf(i).actDrop * 0.8) / 60);
           if (b.sus > bs) { bs = b.sus; best = b; }
         }
         let tx, ty;
@@ -228,7 +228,7 @@
           tx = st.tx; ty = st.ty;
         }
         const dx = tx - this.ret.x, dy = ty - this.ret.y, d = Math.hypot(dx, dy);
-        const sp = this.api.bot.speed;
+        const sp = this.api.botOf(i).speed;
         if (d > 4) { o.mx = dx / d * Math.min(1, d / 60) * sp; o.my = dy / d * Math.min(1, d / 60) * sp; }
         if (best && bs > 0.9 && d < 10) o.actP = true;
         return o;

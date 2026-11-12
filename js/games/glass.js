@@ -162,7 +162,7 @@
       else if (this.stepped[c][1] || this.broken[c][0]) lane = 1;
       else {
         // hàng chưa ai thử: máy khó sẽ chờ người khác thử trước một chút
-        const lv = this.api.bot;
+        const lv = this.api.botOf(i);
         p.wait += 1 / 60;
         const patience = (1 - lv.actDrop) * 1.2;
         const someoneBehindOrSame = this.ps.some((q, j) => j !== i && !q.done && q.col >= p.col - 1 && q.col < c);

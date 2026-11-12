@@ -650,6 +650,7 @@ const GAME_CATS = [
   { id: 'collect', name: 'Thu thập & Đua', icon: '🏁' },
   { id: 'team', name: 'Đồng đội', icon: '🤝' },
   { id: 'brain', name: 'Trí tuệ & Phản xạ', icon: '🧠' },
+  { id: 'board', name: 'Cờ', icon: '♟️' },
 ];
 // Nhóm mặc định của từng game (game mới có thể tự khai báo cat: '...' khi register)
 const GAME_CAT_OF = {

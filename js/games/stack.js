@@ -169,7 +169,7 @@
       const p = this.ps[i];
       const o = { actP: false };
       if (p.done || p.drop || p.cool > 0) return o;
-      const lv = this.api.bot;
+      const lv = this.api.botOf(i);
       const topX = p.stack[p.stack.length - 1];
       // máy chờ hộp tới gần tháp rồi mới thả; máy dễ ngắm kém hơn
       // mỗi lần thả máy ngắm lệch một chút (máy càng dễ càng lệch nhiều)

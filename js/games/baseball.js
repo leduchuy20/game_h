@@ -51,8 +51,8 @@
       const tp = forced || this.seq[this.k]; this.k++;
       this.ball = { x: PX - 40, sp: tp.sp * U.rand(0.92, 1.08), type: tp.id, t: 0, done: false, path, hold: 0, disguise: this.pm };
       this.ps.forEach((p) => { p.swung = false; });
-      const lv = this.api.bot;
-      this.bot.forEach((b) => {
+      this.bot.forEach((b, j) => {
+        const lv = this.api.botOf(j); // mỗi máy một mức
         b.off = U.rand(-1, 1) * (8 + lv.actDrop * 95);
         b.skip = tp.id === 'bomb' && Math.random() < 1 - lv.actDrop * 0.8;
       });

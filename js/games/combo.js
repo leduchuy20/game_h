@@ -76,15 +76,15 @@
         p.shown += (p.pos - p.shown) * Math.min(1, dt * 8);
         if (p.done || this.finished) return;
         let s;
-        if (this.P[i].bot) s = this.botSym(p, dt);
+        if (this.P[i].bot) s = this.botSym(p, dt, i);
         else s = this.readSym(inp[i], p);
         if (s && p.stun <= 0) this.press(p, i, s);
       });
     }
 
     /** máy bấm theo nhịp + tỉ lệ bấm nhầm theo mức */
-    botSym(p, dt) {
-      const lv = this.api.bot;
+    botSym(p, dt, i) {
+      const lv = this.api.botOf(i);
       if (p.stun > 0) return null;
       p.bot.t -= dt;
       if (p.bot.t > 0) return null;

@@ -225,11 +225,11 @@
       const opts = [[p.dx, p.dy], [p.dy, -p.dx], [-p.dy, p.dx]];
       let best = null, bs = -Infinity;
       opts.forEach(([dx, dy], k) => {
-        const sp = this.space(p.x + dx, p.y + dy, this.api.bot.look);
+        const sp = this.space(p.x + dx, p.y + dy, this.api.botOf(i).look);
         if (sp < 0) return;
         let s = sp + Math.min(this.run(p.x, p.y, dx, dy), 12) * 4;
         if (k === 0) s += 25;
-        s += Math.random() * (this.api.bot.look < 100 ? 40 : 10);
+        s += Math.random() * (this.api.botOf(i).look < 100 ? 40 : 10);
         if (s > bs) { bs = s; best = [dx, dy]; }
       });
       // sắp hết đường: nhảy qua vệt nếu ô đáp phía trước còn trống và có chỗ để chạy tiếp

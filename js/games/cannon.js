@@ -190,7 +190,7 @@
     botInput(i) {
       const p = this.ps[i], o = { mx: 0, my: 0, act: false, jumpP: false };
       if (p.out || this.over > 0 || this.finished) return o;
-      const t = this.team[i], dir = t === 0 ? 1 : -1, lv = this.api.bot;
+      const t = this.team[i], dir = t === 0 ? 1 : -1, lv = this.api.botOf(i);
       // né điểm rơi
       for (const s of this.shells) {
         if (s.team === t) continue;

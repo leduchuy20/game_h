@@ -1,0 +1,24 @@
+﻿TRÒN PARTY — BẢN CHẠY KHÔNG CẦN TRÌNH DUYỆT
+============================================
+
+CÁCH CHƠI
+- Bấm đúp TronParty.exe là vào game (không cần cài đặt, không cần mạng).
+- Lần đầu Windows có thể hiện "Windows protected your PC" vì file chưa được ký số:
+  bấm "More info" (Thông tin thêm) -> "Run anyway" (Vẫn chạy).
+- Chép CẢ THƯ MỤC TronParty sang máy khác (USB...) là chơi được, không chép riêng file .exe.
+
+PHÍM TẮT
+- F11        : bật / tắt toàn màn hình
+- F5, Ctrl+R : tải lại game
+- Ctrl+Q     : thoát
+- Bàn phím 4 bộ + tay cầm dùng như bản trình duyệt.
+
+CẬP NHẬT GAME (khi có bản mới)
+- Game nằm trong thư mục "game" ngay cạnh TronParty.exe.
+- Chép đè index.html, thư mục css và js của bản mới vào thư mục "game" là xong,
+  không cần tải lại TronParty.exe.
+- Nếu thư mục TronParty đang nằm trong game_party\dist: bấm đúp "cap-nhat-game.bat"
+  để tự chép bản mới nhất từ game_party vào.
+
+DỮ LIỆU LƯU (tên, màu, bộ phím, mức máy...)
+- Lưu riêng cho ứng dụng tại %APPDATA%\tron-party (không dùng chung với trình duyệt).

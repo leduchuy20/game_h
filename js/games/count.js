@@ -72,7 +72,7 @@
 
     /** máy "nhớ" sai một chút tuỳ mức độ khó */
     makeBot(i) {
-      const lv = this.api.bot, a = this.q.ans;
+      const lv = this.api.botOf(i), a = this.q.ans;
       const sharp = lv.actDrop > 0.4 ? 0.25 : lv.actDrop > 0.1 ? 0.45 : 0.62;
       let guess = a;
       if (Math.random() > sharp) {

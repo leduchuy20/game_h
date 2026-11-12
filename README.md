@@ -6,16 +6,27 @@ Bộ mini-game cho **2–4 người chơi chung một máy** (bàn phím và/ho�
 
 1. Mở file `index.html` bằng Chrome hoặc Edge (nhấp đúp là được).
 2. Bấm **⛶ Toàn màn hình**, cắm laptop ra TV nếu muốn.
-3. Trong sảnh có 4 ô P1–P4:
-   - **Thêm người:** bấm **🙋 Người chơi** ở ô trống rồi chọn bộ phím (hoặc bấm A trên tay cầm) — hay nhanh hơn: nhấn **nút Đánh** trong bộ phím của bạn là vào ngay. Bấm **🤖 Máy** ở ô trống (hoặc **🤖 + Thêm máy**) để thêm người máy.
+3. Sảnh là nơi **người thật** vào chơi (4 ô P1–P4, cần ít nhất 1 người):
+   - **Thêm người:** bấm **🙋 Người chơi** ở ô trống rồi chọn bộ phím (hoặc bấm A trên tay cầm) — hay nhanh hơn: nhấn **nút Đánh** trong bộ phím của bạn là vào ngay.
    - **Đổi tên:** bấm vào tên (✏️), gõ tối đa 8 ký tự, Enter để lưu. **Đổi màu:** bấm vào hình Tròn. Tên và màu được nhớ theo từng ô cho lần sau.
    - **Xoá:** bấm **✕** ở góc ô, hoặc người đó giữ **nút Nhảy 1 giây** (chạm nhẹ không sao — để còn thử phím).
 
+4. Chọn game → ở **màn giới thiệu** của game chỉnh đội hình cho ván đó (cột **Ai chơi · mức máy**):
+   - **🤖 + Thêm máy** để thêm máy (tối đa theo số người của game); mỗi máy có nút **Dễ / TB / Khó** riêng, **✕** để bỏ máy.
+   - Người thật bấm **💤** để nghỉ ván này (nếu đang ở số người tối thiểu thì một máy vào thay); người đang nghỉ bấm **▶ … vào chơi** (hết chỗ thì thay một máy).
+   - Mặc định: mọi người thật trong sảnh (thừa so với số người của game thì người sau nghỉ) + máy Trung bình cho đủ số người tối thiểu. Mỗi lần chọn game là về mặc định; **↻ Chơi lại** thì giữ nguyên đội hình.
+
+5. **Không nhớ phím?** Lúc đếm ngược có bảng **🎮 Phím của bạn** cho từng người; 12 giây đầu ván mỗi nhân vật có nhãn phím ngay bên dưới (chữ mũi tên trong luật được đổi thành phím thật của bạn, vd "A D lái"). Bấm **H** để bật/tắt bảng phím ở mép dưới màn hình suốt ván, hoặc **Esc** để tạm dừng — màn tạm dừng cũng liệt kê phím từng người.
+
 > Nhớ **tắt Unikey/EVKey** (chuyển sang chế độ E) trước khi chơi để phím không bị nuốt.
+
+## Chơi không cần trình duyệt (Windows)
+
+Có bản ứng dụng riêng `dist/TronParty-Windows.zip` (Electron, ~145 MB): giải nén → bấm đúp `TronParty.exe`. Không cần cài đặt, không cần mạng, chép cả thư mục `TronParty` sang máy khác là chơi được. F11 = toàn màn hình, F5 = tải lại, Ctrl+Q = thoát. Game nằm trong `TronParty/game/` — có bản mới thì chép đè `index.html`, `css`, `js`, `assets` vào đó (hoặc chạy `cap-nhat-game.bat` nếu thư mục nằm trong `game_party/dist`). Cách đóng gói lại: xem `desktop/BUILD.md`.
 
 ## Độ khó của máy
 
-Trong sảnh, bấm nút **Máy: …** để đổi qua lại 🟢 **Dễ** → 🟡 **Trung bình** → 🔴 **Khó** (game tự nhớ lựa chọn).
+Chọn ở màn giới thiệu của từng game, **mỗi máy một mức**: 🟢 **Dễ**, 🟡 **TB** (Trung bình), 🔴 **Khó** — ví dụ Sumo có thể 1 máy Dễ + 1 máy Khó. Không nhớ giữa các game (mặc định Trung bình).
 
 | | Dễ | Trung bình | Khó |
 |---|---|---|---|
@@ -112,7 +123,6 @@ Các game loại dần người chơi (Truyền Bom, Chim Bay, Né Laser, Gạch
 | ⌨️ **Bấm Nhanh Ký Tự** | Mỗi người một băng chuyền "từ" gồm 3–5 ký hiệu (↑ ↓ ← → ● = Đánh, ▲ = Nhảy). Gõ đúng hết một từ thì chạy lên một bậc; bấm sai bị khựng, gõ lại từ đầu. Từ viền ⚡ bắn sét đẩy người dẫn đầu lùi một bậc. Về đích trước thắng. |
 | ✏️ **Vẽ Theo Khuôn** | Hình mẫu hiện vài giây rồi ẩn; vẽ lại trên bảng của mình: giữ Đánh để tô, giữ Nhảy để tẩy. Chấm % khớp (tô thừa cũng bị trừ), cộng qua các hình. |
 | 🚚 **Chuyển Đồ Điên Loạn** *(co-op)* | Cả nhóm chuyển đồ trong nhà lên xe tải bên kia sông. Giữ Đánh để khiêng, chạm Nhảy để quăng. Đồ lớn 👥 cần 2 người cùng giữ Đánh (một mình chỉ kéo lê), hai người cùng bấm Nhảy để quăng qua sông. Quăng hụt rơi xuống sông là mất! |
-| 🎉 **Chơi tiệc** | 3 / 5 / 8 game ngẫu nhiên liên tiếp, tự bật/tắt từng game được bốc (nhớ lựa chọn), cộng điểm (hạng 1 được nhiều điểm nhất). Giữa các game có 🎡 vòng quay sự kiện (điểm ×2, tua nhanh, chia điểm, người bét chọn game...). Ở màn giới thiệu bấm nút Xuống để 🎲 cược 1 điểm: nhất +2, bét mất cược. Bật **🎲 Bàn cờ** ở màn chọn tiệc: sau mỗi game mọi người đi trên bàn 25 ô, về càng cao xúc xắc càng to (nhất 3–6, bét 1–3); ô 🪙 +1, ⭐ +3, 🏁 đi qua +3, 🦹 cướp 2 điểm của người dẫn đầu, ⏪ lùi 3 ô, 🛒 trả 3 điểm mua bùa 🔄 đảo phím người dẫn đầu ở game sau. Hết tiệc mà hòa điểm cao nhất → **⚔️ hiệp phụ quyết tử**: chỉ những người hòa đấu 1 ván Sumo trên lõi sàn hoặc Đấu Kiếm 1 chạm, ai thắng +1 điểm. |
 
 **Đấu Sumo & Lăn Tuyết — điều khiển và chế độ**
 
@@ -136,7 +146,16 @@ Các game loại dần người chơi (Truyền Bom, Chim Bay, Né Laser, Gạch
 - **Sàn bập bênh** ⚖️: mọi người dồn về phía nào thì sàn nghiêng, ai cũng trượt về phía đó.
 - Cú húc quyết định (người cuối rơi) được chiếu chậm và phóng to; cú húc tích đầy lực có khựng hình nhẹ.
 
-**Game đồng đội** (Bóng Đá, Kéo Co, Dây Thun, Đại Bác Công Thành, Xe Tăng – Cướp cờ, Đấu Kiếm – Tiến quân, Sumo – Đồng đội): 2 người đấu 1–1, 3 người đấu 2–1, 4 người đấu 2–2. P1 và P3 ở Đội Trái, P2 và P4 ở Đội Phải. Muốn đổi đội thì đổi chỗ trong sảnh.
+## Cờ (tab ♟️ Cờ trong menu)
+
+Chơi được bằng bàn phím, tay cầm hoặc chuột.
+
+| Game | Lối chơi |
+|---|---|
+| ♟️ **Cờ Vua** | 2 người. Đủ luật quốc tế: nhập thành, bắt tốt qua đường, phong cấp (chọn Hậu/Xe/Tượng/Mã), chiếu hết, hòa pat, lặp lại 3 lần, luật 50 nước, không đủ quân. Người–người thay phiên đi trên cùng bàn; đấu máy chọn mức ở màn giới thiệu (🟢 Dễ hay đi hớ, 🟡 Trung bình nhìn 3 nước, 🔴 Khó nghĩ 1,5–3 giây mỗi nước). Phím hướng di ô chọn (giữ để chạy), Đánh = chọn quân / đi, Nhảy = bỏ chọn; chuột: bấm quân rồi bấm ô, hoặc kéo thả. Màn giới thiệu chọn đồng hồ (Không giới hạn, 3+2, 5, 10, 15+10 — hết giờ là thua), bộ quân (Cổ điển / Merida / Maestro) và bàn cờ (Gỗ / Cẩm thạch / Xanh lá). Có chấm ô đi được, tô nước vừa đi, vua bị chiếu sáng đỏ, biên bản nước đi, quân đã ăn và chênh lệch quân. Ván sau tự đổi màu quân. |
+| 🀄 **Cờ Tướng** | 2 người. Đủ luật: Tướng/Sĩ trong cung, cản chân Mã, cản mắt Tượng, Tượng không qua sông, Pháo ăn cách một quân, Tốt qua sông được đi ngang, hai Tướng không được đối mặt. Thắng khi chiếu bí hoặc đối phương hết nước đi. **Chiếu dài** (cứ chiếu làm lặp thế cờ): lặp lần 2 có cảnh báo đỏ, lần 3 bên chiếu bị xử thua; lặp thế thường thì hòa; 60 nước không ăn quân hoặc hai bên hết quân tấn công cũng hòa. Màn giới thiệu chọn đồng hồ, **mặt quân** (Chữ Hán — mặc định / Chữ Việt / Hình cho người mới) và bàn (Gỗ / Giấy đỏ / Ngọc). Biên bản ghi kiểu Việt: quân (X Xe, P Pháo, M Mã, T Tượng, S Sĩ, Tg Tướng, B Tốt) + cột tính từ phải sang của bên đi + `.` tiến / `/` thoái / `-` bình + số bước (Xe, Pháo, Tốt, Tướng) hoặc cột đến (Mã, Tượng, Sĩ), vd. **P2-5**, **M8.7**; hai quân cùng cột ghi `t` (trước) / `s` (sau). Hiện tên khai cuộc (Pháo đầu, Bình phong mã, Thuận pháo, Nghịch pháo, Tiên nhân chỉ lộ, Phi tượng…); máy đi theo sách khai cuộc vài nước đầu và tự tránh chiếu dài. Mép bàn có số cột 1–9 của mỗi bên. Điều khiển giống Cờ Vua (phím hướng / chuột). |
+
+**Game đồng đội** (Bóng Đá, Kéo Co, Dây Thun, Đại Bác Công Thành, Xe Tăng – Cướp cờ, Đấu Kiếm – Tiến quân, Sumo – Đồng đội): 2 người đấu 1–1, 3 người đấu 2–1, 4 người đấu 2–2. P1 và P3 ở Đội Trái, P2 và P4 ở Đội Phải. Thứ tự trong bảng ở màn giới thiệu quyết định đội (người 1, 3 một đội; 2, 4 một đội).
 
 ## Cấu trúc code
 
@@ -144,8 +163,9 @@ Các game loại dần người chơi (Truyền Bom, Chim Bay, Né Laser, Gạch
 index.html          giao diện + nạp các script
 css/style.css       giao diện menu
 js/engine.js        input (phím + tay cầm), âm thanh, vẽ nhân vật, hiệu ứng, vật lý
-js/app.js           luồng: sảnh → chọn game → sẵn sàng → đếm ngược → chơi → kết quả
+js/app.js           luồng: sảnh (người thật) → chọn game → giới thiệu (đội hình + máy) → đếm ngược → chơi → kết quả
 js/games/*.js       mỗi game 1 file
+assets/             ảnh (quân cờ...) kèm CREDITS.md ghi nguồn + giấy phép
 ```
 
 ## Thêm game mới

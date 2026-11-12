@@ -700,7 +700,7 @@
 
     /** máy trong lúc phạt đền / luân lưu */
     penaltyBot(i) {
-      const P = this.pk, o = { mx: 0, my: 0, act: false, jumpP: false }, lv = this.api.bot, cy = FY0 + FH / 2;
+      const P = this.pk, o = { mx: 0, my: 0, act: false, jumpP: false }, lv = this.api.botOf(i), cy = FY0 + FH / 2;
       if (i === P.shooter && P.phase === 'ready') {
         if (!P.sBot) P.sBot = { dir: U.pick([-1, -1, 0, 1, 1]), hold: CHARGE * U.rand(lv.actDrop > 0.4 ? 0.35 : 0.55, lv.actDrop > 0.4 ? 1.2 : 1.0), wait: U.rand(0.6, 2) };
         P.sBot.wait -= 1 / 60;

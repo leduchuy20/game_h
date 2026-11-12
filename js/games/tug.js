@@ -12,7 +12,7 @@
       this.finished = false;
       this.lean = this.P.map(() => 0);
       this.rate = this.P.map(() => 0);
-      this.bot = this.P.map(() => ({ t: U.rand(0.1, 0.3), rate: U.rand(...api.bot.tug) }));
+      this.bot = this.P.map((_, i) => ({ t: U.rand(0.1, 0.3), rate: U.rand(...api.botOf(i).tug) }));
       this.clouds = Array.from({ length: 5 }, () => [U.rand(0, W), U.rand(40, 200), U.rand(0.6, 1.3)]);
       this.startRound();
     }

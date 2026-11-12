@@ -206,7 +206,7 @@
         }
         if (dx || dy) {
           p.face = Math.atan2(dy, dx); p.walk += dt * 14; p.dirx = dx; p.diry = dy;
-          this.move(p, i, dx, dy, p.speed * dt * (this.P[i].bot ? this.api.bot.speed : 1));
+          this.move(p, i, dx, dy, p.speed * dt * (this.P[i].bot ? this.api.botOf(i).speed : 1));
           // BOM1 đá bom: có 👢 mà đi thẳng vào quả bom phía trước thì bom trượt đi
           if (p.kick) {
             const cx = Math.round(p.x), cy = Math.round(p.y), b = this.bombAt(cx + dx, cy + dy);

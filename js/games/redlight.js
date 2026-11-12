@@ -37,10 +37,8 @@
       if (this.phaseT <= 0) {
         if (this.phase === 'green') {
           this.phase = 'turning'; this.phaseT = TURN; Sfx.play('warn');
-          const lv = this.api.bot;
           // máy đôi khi "tham" chạy thêm một chút — máy càng dễ càng hay tham
-          const chance = 0.2 + lv.actDrop * 0.5;
-          this.ps.forEach((p) => { p.greed = Math.random() < chance ? U.rand(0.2, 1.1) : 0; });
+          this.ps.forEach((p, j) => { const chance = 0.2 + this.api.botOf(j).actDrop * 0.5; p.greed = Math.random() < chance ? U.rand(0.2, 1.1) : 0; });
         } else if (this.phase === 'turning') { this.phase = 'red'; this.phaseT = U.rand(1.6, 3); this.redT = 0; Sfx.play('crash'); }
         else { this.phase = 'green'; this.phaseT = U.rand(1.6, 4); Sfx.play('go'); }
       }
