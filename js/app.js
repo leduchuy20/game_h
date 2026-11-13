@@ -686,6 +686,7 @@ const App = {
     if (g.pitches) bits.push(`${g.pitches} cú ném`);
     if (g.rounds) bits.push(`${g.rounds} đơn hàng`);
     if (g.stocksMax) bits.push(`${g.stocksMax} mạng`);
+    if (g.mRounds) bits.push(`${g.mRounds} vòng bàn cờ`);
     return bits.join(' · ');
   },
   cycleMode() {
@@ -964,7 +965,7 @@ const App = {
     }
     ctx.restore();
     if (this.state === 'countdown') this.drawHelpBig(ctx);
-    else if (this.inst && this.state === 'play') {
+    else if (this.inst && this.state === 'play' && !this.inst.ownHelp) {   // ownHelp: game tự vẽ bảng phím trong bố cục (vd. Cờ Tỷ Phú)
       if (this.helpOn) this.drawHelpStrip(ctx);
       else if (this.goT < HELP_FLOAT_T) this.drawHelpFloat(ctx, Math.min(1, (HELP_FLOAT_T - this.goT) / 1.5));
       this.drawHelpTag(ctx);
@@ -1069,7 +1070,7 @@ const App = {
       const ws = line.map((r) => this.helpLine(ctx, r, 0, 0, fs, false) + fs * 1.6);
       const total = ws.reduce((a, b) => a + b, 0) + 8 * (line.length - 1);
       let x = (W - total) / 2;
-      const y = H - 6 - ph / 2 - (lines.length - 1 - li) * (ph + gap) - 16;
+      const y = this.helpBottom() - 6 - ph / 2 - (lines.length - 1 - li) * (ph + gap) - 16;
       line.forEach((r, k) => {
         // nhân vật đứng sát chỗ dải chữ thì làm mờ để khỏi che
         let near = false;
@@ -1120,9 +1121,11 @@ const App = {
     if (!this.helpRows().length) return;
     const t = `Esc: tạm dừng (xem phím)${this.helpKeyFree() ? ` · H: ${this.helpOn ? 'ẩn' : 'hiện'} bảng phím` : ''}${this.def.helpExtra ? ' · ' + this.def.helpExtra : ''}`;
     ctx.save(); ctx.globalAlpha = 0.6;
-    Draw.text(ctx, t, W / 2, H - 8, { size: 12, color: '#fff', stroke: 'rgba(0,0,0,0.7)', sw: 3, weight: 600 });
+    Draw.text(ctx, t, this.inst && this.inst.helpX || W / 2, this.helpBottom() - 8, { size: 12, color: '#fff', stroke: 'rgba(0,0,0,0.7)', sw: 3, weight: 600 });
     ctx.restore();
   },
+  /** mép dưới cho dải phím / dòng nhắc — game phủ kín màn hình (vd. Cờ Tỷ Phú) đặt inst.helpBottom để khỏi che bàn */
+  helpBottom() { return (this.inst && this.inst.helpBottom) || H; },
   pauseHelpHTML() {
     const rows = this.helpRows();
     if (!rows.length) return '';

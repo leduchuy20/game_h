@@ -12,7 +12,8 @@ const BoardKit = (() => {
   /* ---------- Ảnh ---------- */
   const IMG = {};
   const RASTER = 160; // vẽ SVG ra canvas 160×160 một lần
-  function img(src) {
+  /** w×h: kích thước vẽ sẵn (mặc định vuông RASTER) — chỉ có tác dụng ở lần gọi đầu cho mỗi src */
+  function img(src, w = RASTER, h = w) {
     let e = IMG[src];
     if (e) return e;
     e = IMG[src] = { ok: false, bad: false, el: null };
@@ -20,17 +21,18 @@ const BoardKit = (() => {
     im.onload = () => {
       try {
         const c = document.createElement('canvas');
-        c.width = c.height = RASTER;
-        c.getContext('2d').drawImage(im, 0, 0, RASTER, RASTER);
+        c.width = w; c.height = h;
+        c.getContext('2d').drawImage(im, 0, 0, w, h);
         e.el = c;
       } catch (err) { e.el = im; }
       e.ok = true;
     };
     im.onerror = () => { e.bad = true; };
-    im.src = src;
+    // ảnh đã gói sẵn dạng data URI (assets/*/art.js) → canvas không bị "bẩn", dùng được làm texture WebGL
+    im.src = (typeof window !== 'undefined' && window.ASSET_URI && window.ASSET_URI[src]) || src;
     return e;
   }
-  const preload = (list) => list.forEach(img);
+  const preload = (list) => list.forEach((s) => img(s));
   /** đã nạp xong (hoặc lỗi) hết danh sách chưa — trả tỉ lệ 0..1 */
   const progress = (list) => list.filter((s) => { const e = img(s); return e.ok || e.bad; }).length / Math.max(1, list.length);
 
