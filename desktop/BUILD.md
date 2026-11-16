@@ -7,12 +7,13 @@ Dùng Electron (bản đã đóng gói sẵn, không cần cài Node trên máy 
 2. Giải nén vào thư mục `TronParty/`, đổi tên `electron.exe` → `TronParty.exe`, xoá `resources/default_app.asar`.
    (Có thể xoá bớt `locales/*.pak`, chỉ giữ `en-US.pak` và `vi.pak`.)
 3. Tạo `TronParty/resources/app/` và chép `main.js` + `package.json` trong thư mục này vào đó.
-4. Chép `index.html`, `css/`, `js/`, `assets/` của game vào `TronParty/game/`
+4. Chép `index.html`, `css/`, `js/`, `assets/`, `fonts/`, `naobo/` của game vào `TronParty/game/`
    (KHÔNG chép `arcade.html` — trang đó cần mạng và đã gỡ khỏi menu).
-5. Chép `HUONG-DAN.txt` và `cap-nhat-game.bat` vào `TronParty/`.
+5. Chép `HUONG-DAN.txt`, `cap-nhat-game.bat` và `tao-loi-tat.bat` vào `TronParty/`.
 6. Nén `TronParty/` thành `TronParty-Windows.zip` (đặt trong `dist/`, đã có trong .gitignore).
 
 Ghi chú:
+- `main.js` có khoá một bản chạy (`requestSingleInstanceLock`) và màn "Đang tải"; sửa `main.js` thì chỉ cần chép đè vào `TronParty/resources/app/` (không cần làm lại các bước trên).
 - `main.js` tìm game ở thư mục `game` cạnh TronParty.exe → cập nhật game chỉ cần chép đè `game/`, không phải đóng gói lại.
 - File .exe chưa ký số nên lần đầu Windows SmartScreen hỏi → "More info" → "Run anyway".
 - Biểu tượng .exe là biểu tượng mặc định của Electron (đổi biểu tượng cần `rcedit`, chạy trên Windows hoặc qua wine).

@@ -4,9 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Tròn Party</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="fonts/fonts.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -23,11 +21,22 @@
           <i class="blob" style="--c:#34cc78;--d:#1a8648;--l:#cbf6dd"></i>
           <i class="blob" style="--c:#ffbf2e;--d:#c0840a;--l:#fff1c6"></i>
         </div>
-        <p class="sub">Mini-game cho 2–4 người chơi chung một máy</p>
-        <div class="col">
-          <button class="btn primary big" data-act="start">▶ Bắt đầu</button>
-          <button class="btn" data-act="fullscreen">⛶ Toàn màn hình</button>
+        <p class="sub">Hôm nay chơi gì nào?</p>
+        <div class="pick2">
+          <button class="btn pick party primary" data-act="start">
+            <span class="pk-ico">🎉</span>
+            <span class="pk-name">Tròn Party</span>
+            <span class="pk-desc">Mini-game 2–4 người<br>chơi chung một máy</span>
+            <span class="pk-go">▶ Bắt đầu</span>
+          </button>
+          <button class="btn pick brain" data-act="naobo">
+            <span class="pk-ico">🧠</span>
+            <span class="pk-name">Phòng tập não bộ</span>
+            <span class="pk-desc">Luyện não một mình<br>độ khó tự điều chỉnh</span>
+            <span class="pk-go">Vào tập ›</span>
+          </button>
         </div>
+        <button class="btn small-fs" data-act="fullscreen">⛶ Toàn màn hình</button>
         <p class="note">Mẹo: tắt Unikey/EVKey (chuyển sang chế độ E) trước khi chơi để phím không bị nuốt.<br>
           Có thể cắm thêm tay cầm USB/Bluetooth — mỗi tay cầm là 1 người chơi.</p>
       </section>
@@ -39,12 +48,14 @@
           <small>Bấm vào <b>tên</b> để đổi tên · bấm <b>hình Tròn</b> để đổi màu · <b>✕</b> để xoá (hoặc giữ nút Nhảy 1 giây)</small></p>
         <div class="slots" id="slots"></div>
         <div class="schemes" id="schemes"></div>
+        <div class="netbox" id="netbox"></div>
         <p class="hint small kb-live" id="kb-live"></p>
         <div class="row">
           <button class="btn" data-act="lobby-back">← Quay lại</button>
           <button class="btn" data-act="len-level" id="btn-len-level">⏱ Ván: Vừa</button>
           <button class="btn" data-act="speed" id="btn-speed">🐢 Tốc độ thường</button>
           <button class="btn" data-act="keys">⌨️ Đổi phím</button>
+          <button class="btn" data-act="net" id="btn-net">🌐 Chơi qua mạng</button>
           <button class="btn primary" data-act="lobby-next" id="btn-lobby-next">Chọn game →</button>
         </div>
         <p class="hint small">Nhấn <b>Enter</b> để bấm nút đang chọn</p>
@@ -137,6 +148,21 @@
   <script src="js/games/chess.js"></script>
   <script src="js/games/xiangqi_engine.js"></script>
   <script src="js/games/xiangqi.js"></script>
+  <script src="js/games/caro_engine.js"></script>
+  <script src="js/games/caro.js"></script>
+  <script src="js/games/typing_words.js"></script>
+  <script src="js/games/typing_core.js"></script>
+  <script src="js/games/typing.js"></script>
+  <script src="js/games/typing_meteor.js"></script>
+  <script src="js/games/typing_race.js"></script>
+  <script src="js/games/catdog_core.js"></script>
+  <script src="js/games/catdog_art.js"></script>
+  <script src="js/games/catdog.js"></script>
+  <script src="js/games/jigsaw_core.js"></script>
+  <script src="js/games/jigsaw_art.js"></script>
+  <script src="js/games/jigsaw.js"></script>
+  <script src="js/games/g2048_core.js"></script>
+  <script src="js/games/g2048.js"></script>
   <script src="js/lib/three.min.js"></script>
   <script src="js/games/kit3d.js"></script>
   <script src="assets/monopoly/art.js"></script>
@@ -145,6 +171,8 @@
   <script src="js/games/ludo_rules.js"></script>
   <script src="js/games/ludo3d.js"></script>
   <script src="js/games/ludo.js"></script>
+  <script src="js/lib/peerjs.min.js"></script>
+  <script src="js/net.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

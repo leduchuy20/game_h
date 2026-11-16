@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <title>Tròn Party — vào phòng chơi qua mạng</title>
+  <style>
+    :root { --bg: #1d1240; --card: #2b1b5e; --acc: #ffe14d; --txt: #fff; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--txt); font-family: "Baloo 2", "Segoe UI", system-ui, sans-serif; overflow: hidden; touch-action: none; }
+    #join { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .card { width: min(440px, 100%); background: var(--card); border-radius: 22px; padding: 26px 24px; box-shadow: 0 20px 50px rgba(0,0,0,.4); text-align: center; }
+    h1 { margin: 0 0 4px; font-size: 30px; color: var(--acc); }
+    p { margin: 6px 0 16px; opacity: .85; font-size: 15px; line-height: 1.45; }
+    label { display: block; text-align: left; font-weight: 700; margin: 12px 0 4px; }
+    input { width: 100%; font: inherit; font-size: 22px; padding: 10px 14px; border-radius: 12px; border: 2px solid #5b45a8; background: #160d33; color: #fff; outline: none; }
+    input:focus { border-color: var(--acc); }
+    #code { letter-spacing: 10px; text-align: center; font-size: 32px; font-weight: 800; }
+    button { font: inherit; font-weight: 800; border: 0; border-radius: 14px; cursor: pointer; }
+    .go { width: 100%; margin-top: 18px; padding: 12px; font-size: 22px; background: var(--acc); color: #2a1840; }
+    .go:disabled { opacity: .5; cursor: default; }
+    #msg { min-height: 22px; margin-top: 12px; font-size: 15px; color: #ffb4b4; }
+    #play { position: fixed; inset: 0; display: none; background: #000; }
+    video { width: 100%; height: 100%; object-fit: contain; display: block; }
+    #bar { position: fixed; left: 8px; right: 8px; bottom: 6px; display: flex; gap: 8px; align-items: center; pointer-events: none; font-size: 14px; transition: opacity .4s; }
+    #bar.hide { opacity: 0; }
+    #bar .st { background: rgba(0,0,0,.55); padding: 3px 10px; border-radius: 10px; }
+    #bar button { pointer-events: auto; background: rgba(0,0,0,.55); color: #fff; padding: 4px 10px; font-size: 14px; }
+    #bar .sp { flex: 1; }
+    /* nút cảm ứng (điện thoại / máy tính bảng) */
+    #touch { position: fixed; inset: 0; pointer-events: none; display: none; }
+    .pad { position: absolute; left: 22px; bottom: 52px; width: 170px; height: 170px; border-radius: 50%; background: rgba(255,255,255,.12); border: 2px solid rgba(255,255,255,.3); pointer-events: auto; }
+    .pad i { position: absolute; left: 50%; top: 50%; width: 66px; height: 66px; margin: -33px; border-radius: 50%; background: rgba(255,255,255,.45); }
+    .btns { position: absolute; right: 22px; bottom: 56px; display: flex; gap: 18px; align-items: flex-end; pointer-events: auto; }
+    .tb { width: 92px; height: 92px; border-radius: 50%; font-size: 20px; color: #fff; background: rgba(255,90,90,.55); border: 2px solid rgba(255,255,255,.5); }
+    .tb.j { width: 76px; height: 76px; background: rgba(80,160,255,.55); margin-bottom: 40px; }
+    .tb.on { filter: brightness(1.6); transform: scale(.94); }
+  </style>
+</head>
+<body>
+  <!-- màn vào phòng -->
+  <div id="join"><div class="card">
+    <h1>🌐 Tròn Party</h1>
+    <p>Chơi cùng máy đang mở game. Trên máy đó vào <b>sảnh → 🌐 Chơi qua mạng → Tạo phòng</b> rồi đọc mã phòng cho bạn.</p>
+    <label for="name">Tên của bạn</label>
+    <input id="name" maxlength="8" autocomplete="off" spellcheck="false" placeholder="Tối đa 8 chữ">
+    <label for="code">Mã phòng</label>
+    <input id="code" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="····">
+    <button class="go" id="go">Vào phòng</button>
+    <div id="msg"></div>
+  </div></div>
+  <!-- màn chơi: hình từ máy chủ -->
+  <div id="play">
+    <video id="v" autoplay playsinline muted></video>
+    <div id="bar"><span class="st" id="st">Đang kết nối…</span><span class="sp"></span>
+      <button id="snd">🔇 Bật tiếng</button><button id="fs">⛶</button><button id="out">Thoát</button></div>
+    <div id="touch">
+      <div class="pad" id="pad"><i id="knob"></i></div>
+      <div class="btns"><button class="tb j" id="bj">Nhảy</button><button class="tb" id="ba">Đánh</button></div>
+    </div>
+  </div>
+  <script src="js/lib/peerjs.min.js"></script>
+  <script>
+  'use strict';
+  /* Máy khách: nhận hình + tiếng từ máy chủ, gửi phím / tay cầm / chạm / chuột về (xem js/net.js). */
+  const PREFIX = 'tronparty-';
+  const $ = (id) => document.getElementById(id);
+  const store = (k, v) => { try { if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); } catch (e) { return null; } return null; };
+  let key = store('tronparty.netkey');
+  if (!key) { key = Math.random().toString(36).slice(2, 10); store('tronparty.netkey', key); }
+  $('name').value = store('tronparty.netname') || '';
+  $('code').value = new URLSearchParams(location.search).get('code') || store('tronparty.netcode') || '';
+  const msg = (s) => { $('msg').textContent = s || ''; };
+  let peer = null, conn = null, playing = false;
+
+  function peerOpts() {
+    const o = { debug: 1 };
+    const s = store('tronparty.peerserver');
+    if (s) { const [host, port] = s.split(':'); Object.assign(o, { host, port: Number(port) || 9000, path: '/', secure: false }); }
+    return o;
+  }
+  function connect() {
+    const name = $('name').value.trim().slice(0, 8), code = $('code').value.replace(/\D/g, '');
+    if (!name) { msg('Nhập tên đã nhé'); $('name').focus(); return; }
+    if (code.length !== 4) { msg('Mã phòng gồm 4 chữ số'); $('code').focus(); return; }
+    store('tronparty.netname', name); store('tronparty.netcode', code);
+    msg(''); $('go').disabled = true; $('go').textContent = 'Đang tìm phòng…';
+    if (peer) { try { peer.destroy(); } catch (e) { /* bỏ qua */ } }
+    peer = new Peer(PREFIX + 'g-' + Math.random().toString(36).slice(2, 12), peerOpts());
+    peer.on('open', () => {
+      conn = peer.connect(PREFIX + code, { reliable: true });
+      conn.on('open', () => conn.send({ t: 'hello', name, key }));
+      conn.on('data', onData);
+      conn.on('close', () => lost('Mất kết nối với máy chủ.'));
+    });
+    peer.on('call', (call) => {
+      call.answer();
+      call.on('stream', (s) => { $('v').srcObject = s; show(); });
+    });
+    peer.on('error', (e) => {
+      const t = e && e.type;
+      lost(t === 'peer-unavailable' ? 'Không tìm thấy phòng — kiểm tra lại mã (máy chủ đã bấm Tạo phòng chưa?)'
+        : t === 'network' || t === 'server-error' || t === 'socket-error' ? 'Không nối được máy chủ tìm phòng — kiểm tra Internet.'
+          : 'Lỗi kết nối: ' + (t || e));
+    });
+  }
+  function onData(d) {
+    if (!d) return;
+    if (d.t === 'ok') { $('st').textContent = `🎮 ${d.name} — phím: WASD/mũi tên · Space = Đánh · K = Nhảy`; $('st').style.borderLeft = `6px solid ${d.color}`; }
+    else if (d.t === 'full') lost('Phòng đã đủ 4 người.');
+    else if (d.t === 'kick') lost('Chủ phòng đã mời bạn ra.');
+  }
+  // thanh trạng thái tự ẩn sau vài giây (đỡ che giao diện game), rê chuột / chạm là hiện lại
+  let barT = 0;
+  const poke = () => { $('bar').classList.remove('hide'); clearTimeout(barT); barT = setTimeout(() => $('bar').classList.add('hide'), 4000); };
+  addEventListener('pointermove', poke); addEventListener('pointerdown', poke);
+  function show() {
+    poke();
+    playing = true;
+    $('join').style.display = 'none'; $('play').style.display = 'block';
+    if (matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window) $('touch').style.display = 'block';
+  }
+  function lost(text) {
+    playing = false;
+    $('play').style.display = 'none'; $('join').style.display = 'flex';
+    $('go').disabled = false; $('go').textContent = 'Vào phòng';
+    msg(text);
+  }
+  $('go').onclick = connect;
+  $('code').addEventListener('keydown', (e) => { if (e.key === 'Enter') connect(); });
+  $('name').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('code').focus(); });
+  $('out').onclick = () => { if (peer) peer.destroy(); lost(''); };
+  $('fs').onclick = () => { const d = document.documentElement; if (document.fullscreenElement) document.exitFullscreen(); else if (d.requestFullscreen) d.requestFullscreen().catch(() => {}); };
+  $('snd').onclick = () => { const v = $('v'); v.muted = !v.muted; v.play().catch(() => {}); $('snd').textContent = v.muted ? '🔇 Bật tiếng' : '🔊 Tắt tiếng'; };
+
+  /* ---------- điều khiển ---------- */
+  const S = { mx: 0, my: 0, act: false, jump: false, na: 0, nj: 0 };
+  const down = new Set(), touch = { mx: 0, my: 0, act: false, jump: false };
+  const KA = ['Space', 'KeyJ', 'Enter', 'KeyQ'], KJ = ['KeyK', 'ShiftLeft', 'ShiftRight', 'KeyE'];
+  let padPrev = { a: false, b: false };
+  function send() { if (conn && conn.open) { try { conn.send({ t: 'in', s: S }); } catch (e) { /* bỏ qua */ } } }
+  function refresh() {
+    const k = (a) => a.some((c) => down.has(c));
+    let mx = (k(['ArrowRight', 'KeyD']) ? 1 : 0) - (k(['ArrowLeft', 'KeyA']) ? 1 : 0);
+    let my = (k(['ArrowDown', 'KeyS']) ? 1 : 0) - (k(['ArrowUp', 'KeyW']) ? 1 : 0);
+    let act = k(KA), jump = k(KJ);
+    // tay cầm cắm vào máy khách
+    const gp = navigator.getGamepads ? [...navigator.getGamepads()].find((g) => g && g.connected) : null;
+    if (gp) {
+      let x = gp.axes[0] || 0, y = gp.axes[1] || 0;
+      if (Math.hypot(x, y) < 0.35) x = y = 0;
+      const b = (i) => !!(gp.buttons[i] && gp.buttons[i].pressed);
+      if (b(14)) x = -1; if (b(15)) x = 1; if (b(12)) y = -1; if (b(13)) y = 1;
+      if (x || y) { mx = x; my = y; }
+      const a = b(0) || b(2), bb = b(1) || b(3);
+      if (a && !padPrev.a) S.na++;
+      if (bb && !padPrev.b) S.nj++;
+      padPrev = { a, b: bb };
+      act = act || a; jump = jump || bb;
+    }
+    if (touch.mx || touch.my) { mx = touch.mx; my = touch.my; }
+    act = act || touch.act; jump = jump || touch.jump;
+    const ch = mx !== S.mx || my !== S.my || act !== S.act || jump !== S.jump;
+    S.mx = mx; S.my = my; S.act = act; S.jump = jump;
+    return ch;
+  }
+  addEventListener('keydown', (e) => {
+    if (!playing) return;
+    e.preventDefault();
+    if (down.has(e.code)) return;
+    down.add(e.code);
+    if (KA.includes(e.code)) S.na++;
+    if (KJ.includes(e.code)) S.nj++;
+    refresh(); send();
+  });
+  addEventListener('keyup', (e) => { down.delete(e.code); if (playing) { refresh(); send(); } });
+  addEventListener('blur', () => { down.clear(); refresh(); send(); });
+  let beat = 0;
+  (function loop() {
+    if (playing) { const ch = refresh(); beat++; if (ch || beat % 6 === 0) send(); }   // ~10 lần/giây giữ nhịp
+    requestAnimationFrame(loop);
+  })();
+  // cần điều khiển cảm ứng
+  const pad = $('pad'), knob = $('knob');
+  let padId = null;
+  const padMove = (e) => {
+    const r = pad.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    let dx = (e.clientX - cx) / (r.width / 2), dy = (e.clientY - cy) / (r.height / 2);
+    const l = Math.hypot(dx, dy); if (l > 1) { dx /= l; dy /= l; }
+    touch.mx = Math.abs(dx) < 0.25 ? 0 : dx; touch.my = Math.abs(dy) < 0.25 ? 0 : dy;
+    knob.style.transform = `translate(${dx * 50}px, ${dy * 50}px)`;
+  };
+  pad.addEventListener('pointerdown', (e) => { padId = e.pointerId; pad.setPointerCapture(e.pointerId); padMove(e); });
+  pad.addEventListener('pointermove', (e) => { if (e.pointerId === padId) padMove(e); });
+  const padEnd = (e) => { if (e.pointerId !== padId) return; padId = null; touch.mx = touch.my = 0; knob.style.transform = ''; };
+  pad.addEventListener('pointerup', padEnd); pad.addEventListener('pointercancel', padEnd);
+  const hold = (el, k, cnt) => {
+    el.addEventListener('pointerdown', (e) => { e.preventDefault(); touch[k] = true; S[cnt]++; el.classList.add('on'); refresh(); send(); });
+    const up = () => { touch[k] = false; el.classList.remove('on'); refresh(); send(); };
+    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('pointerleave', up);
+  };
+  hold($('ba'), 'act', 'na'); hold($('bj'), 'jump', 'nj');
+  // chuột / chạm lên hình → toạ độ 1280×720 của game (trừ viền đen do giữ tỉ lệ)
+  const v = $('v');
+  const toGame = (e) => {
+    const r = v.getBoundingClientRect(), k = Math.min(r.width / 1280, r.height / 720);
+    const ox = r.left + (r.width - 1280 * k) / 2, oy = r.top + (r.height - 720 * k) / 2;
+    return { x: (e.clientX - ox) / k, y: (e.clientY - oy) / k };
+  };
+  let lastMove = 0;
+  const ptr = (k) => (e) => {
+    if (!conn || !conn.open) return;
+    if (k === 'move') { const t = performance.now(); if (t - lastMove < 33) return; lastMove = t; }
+    const q = toGame(e);
+    try { conn.send({ t: 'ptr', k, x: q.x, y: q.y }); } catch (err) { /* bỏ qua */ }
+  };
+  v.addEventListener('pointerdown', ptr('down')); v.addEventListener('pointermove', ptr('move')); v.addEventListener('pointerup', ptr('up'));
+  v.addEventListener('contextmenu', (e) => e.preventDefault());
+  </script>
+</body>
+</html>

@@ -3,9 +3,20 @@
 
 CÁCH CHƠI
 - Bấm đúp TronParty.exe là vào game (không cần cài đặt, không cần mạng).
+- Bấm mở là hiện ngay khung "Tròn Party - Đang nạp game..."; chờ vài giây là vào game.
+- Mỗi lúc chỉ chạy MỘT cửa sổ game: bấm TronParty.exe thêm lần nữa thì cửa sổ đang mở
+  được đưa lên trước (nút trên thanh tác vụ nháy), không mở thêm bản mới.
 - Lần đầu Windows có thể hiện "Windows protected your PC" vì file chưa được ký số:
   bấm "More info" (Thông tin thêm) -> "Run anyway" (Vẫn chạy).
 - Chép CẢ THƯ MỤC TronParty sang máy khác (USB...) là chơi được, không chép riêng file .exe.
+- Tắt bằng nút X là tắt hẳn, không còn chạy ngầm.
+
+PHÒNG TẬP NÃO BỘ (app luyện não 1 người, có sẵn trong Tròn Party)
+- Ở màn đầu Tròn Party bấm "🧠 Phòng tập não bộ"; bấm "← Tròn Party" ở góc trên để quay về.
+- Mở thẳng: bấm chuột phải biểu tượng Tròn Party trên thanh tác vụ -> "Phòng tập não bộ",
+  hoặc bấm đúp "tao-loi-tat.bat" một lần để có 2 lối tắt "Tròn Party" và "Phòng tập não bộ" trên Desktop.
+- Không còn dùng file PhongTapNaoBo.exe cũ (bản đó mỗi lần mở phải tự giải nén ~250 MB nên chậm,
+  bấm nhiều lần dễ đứng máy).
 
 PHÍM TẮT
 - F11        : bật / tắt toàn màn hình
@@ -15,10 +26,11 @@ PHÍM TẮT
 
 CẬP NHẬT GAME (khi có bản mới)
 - Game nằm trong thư mục "game" ngay cạnh TronParty.exe.
-- Chép đè index.html, thư mục css và js của bản mới vào thư mục "game" là xong,
+- Chép đè index.html, các thư mục css, js, assets, fonts, naobo của bản mới vào thư mục "game" là xong,
   không cần tải lại TronParty.exe.
 - Nếu thư mục TronParty đang nằm trong game_party\dist: bấm đúp "cap-nhat-game.bat"
-  để tự chép bản mới nhất từ game_party vào.
+  để tự chép bản mới nhất từ game_party vào (kèm Phòng tập não bộ mới nhất trên Google Drive nếu có).
+- Sửa Phòng tập não bộ: chép file phong-tap-nao-bo.html mới đè vào game\naobo\.
 
 DỮ LIỆU LƯU (tên, màu, bộ phím, mức máy...)
 - Lưu riêng cho ứng dụng tại %APPDATA%\tron-party (không dùng chung với trình duyệt).

@@ -132,6 +132,8 @@ const App = {
         if (el.offsetTop < box.scrollTop + 8) box.scrollTop = el.offsetTop - 10;
         else if (el.offsetTop + el.offsetHeight > box.scrollTop + box.clientHeight - 8) box.scrollTop = el.offsetTop + el.offsetHeight - box.clientHeight + 12;
       }
+      // màn giới thiệu cuộn được: chọn bằng phím thì cuộn tới nút (hàng nút Bắt đầu dính đáy — CSS scroll-padding chừa chỗ)
+      if (el.closest('#intro-card') && !el.closest('.intro-actions')) { try { el.scrollIntoView({ block: 'nearest' }); } catch (e) { /* bỏ qua */ } }
     }
   },
   nav(dir) {
@@ -172,9 +174,11 @@ const App = {
 
   /* ---------- Hành động nút ---------- */
   action(a, el) {
+    if (typeof Net !== 'undefined' && a.startsWith('net') && Net.action(a, el)) return;
     Sfx.play('select');
     switch (a) {
       case 'start': this.openLobby(); break;
+      case 'naobo': location.href = 'naobo/phong-tap-nao-bo.html'; break;   // app luyện não 1 người (file gốc, chép nguyên)
       case 'fullscreen':
         if (document.fullscreenElement) document.exitFullscreen();
         else document.documentElement.requestFullscreen?.().catch(() => {});
@@ -246,11 +250,11 @@ const App = {
     this.state = 'lobby';
     this.inst = null; this.picking = -1; this.editing = -1;
     // tên/màu có thể vừa đổi: cập nhật người đang ở trong ô
-    this.slots.forEach((p, s) => { if (p) { p.name = this.profiles[s].name || 'P' + (s + 1); p.color = COLOR_CHOICES[this.profiles[s].color]; } });
+    this.slots.forEach((p, s) => { if (p) { if (!(p.src && p.src.type === 'net')) p.name = this.profiles[s].name || 'P' + (s + 1); p.color = COLOR_CHOICES[this.profiles[s].color]; } });
     this.renderLobby();
     this.show('s-lobby');
   },
-  sameSrc(a, b) { return a && b && a.type === b.type && (a.type === 'kb' ? a.scheme === b.scheme : a.index === b.index); },
+  sameSrc(a, b) { return a && b && a.type === b.type && (a.type === 'kb' ? a.scheme === b.scheme : a.type === 'net' ? a.id === b.id : a.index === b.index); },
   /* hồ sơ từng ô (tên + màu) — nhớ trong localStorage 'tronparty.profiles' */
   loadProfiles() {
     this.profiles = [0, 1, 2, 3].map((s) => ({ name: '', color: s }));
@@ -351,7 +355,7 @@ const App = {
         <button class="btn xbtn" data-act="slot-rm" data-s="${s}" title="Xoá người chơi">✕</button>
         <button class="btn blobbtn" data-act="slot-color" data-s="${s}" title="Đổi màu">${this.blobHTML(c, 'lg')}</button>
         ${nameEl}
-        <div class="src">${p.bot ? '🤖 Máy' : (p.src.type === 'pad' ? '🎮 ' : '⌨️ ') + srcName(p.src)}</div>
+        <div class="src">${p.bot ? '🤖 Máy' : (p.src.type === 'pad' ? '🎮 ' : p.src.type === 'net' ? '🌐 ' : '⌨️ ') + srcName(p.src)}</div>
         <div class="keys">${keys}</div>${test}</div>`;
     }).join('');
 
@@ -369,6 +373,7 @@ const App = {
     const btn = document.getElementById('btn-lobby-next');
     btn.disabled = n < 1;
     btn.textContent = n < 1 ? 'Cần ít nhất 1 người' : `Chọn game → (${n} người)`;
+    if (typeof Net !== 'undefined') Net.render();
     const want = focusSel && document.querySelector(`#s-lobby ${focusSel}`);
     if (want) this.setFocus(want, false);
     else if (!this.focused || this.focused.disabled || !document.body.contains(this.focused)) {
@@ -477,10 +482,13 @@ const App = {
     for (const g of Party.games) {
       if (cat !== 'all' && g.cat !== cat) continue;
       // thiếu người thì thêm máy, thừa người thì cho nghỉ — chỉnh ở màn giới thiệu của game
+      // ảnh thẻ: assets/thumbs/<id>.webp (chụp từ chính game bằng tools/make-thumbs.js); thiếu ảnh thì còn nền màu + emoji
       cards.push(`<button class="btn gamecard" data-act="pick" data-id="${g.id}">
-        <span class="em">${g.emoji}</span><span class="gn">${g.name}</span>
-        <span class="gt">${g.tagline}</span>
-        <span class="gp">${(g.minPlayers || 2) === (g.maxPlayers || 4) ? g.minPlayers : `${g.minPlayers || 2}–${g.maxPlayers || 4}`} người${g.coop ? ' · co-op' : ''}</span></button>`);
+        <span class="th"><img src="assets/thumbs/${g.id}.webp" alt="" loading="lazy" onerror="this.remove()">
+          <span class="em">${g.emoji}</span>
+          <span class="gp">${(g.minPlayers || 2) === (g.maxPlayers || 4) ? g.minPlayers : `${g.minPlayers || 2}–${g.maxPlayers || 4}`} người${g.coop ? ' · co-op' : ''}</span>
+          <span class="gt">${g.tagline}</span></span>
+        <span class="gn">${g.name}</span></button>`);
     }
     const box = document.getElementById('games');
     box.innerHTML = cards.join('');
@@ -577,7 +585,7 @@ const App = {
     this.api.opts = {};
     for (const o of def.options || []) {
       const saved = ((this.gameOpts || {})[def.id] || {})[o.id];
-      this.api.opts[o.id] = o.items.some((v) => v.id === saved) ? saved : o.items[0].id;
+      this.api.opts[o.id] = o.items.some((v) => v.id === saved) ? saved : (o.def ?? o.items[0].id);   // o.def: mặc định không phải thẻ đầu
     }
     const pc = def.playerChoices;
     this.choices = this.players.map((p) => (pc ? (p.bot ? (pc.botDef ?? U.randi(0, pc.items.length - 1)) : (pc.def ?? 0)) : 0));
@@ -588,7 +596,7 @@ const App = {
     this.api.looks = this.looks;
     this.prevUp = this.players.map(() => false);
     this.prevDir = this.players.map(() => 0);
-    this.speedMul = this.fast ? 1.3 : 1;
+    this.speedMul = this.fast && !def.noFast ? 1.3 : 1;   // noFast: game đo thời gian thật (Gõ Chữ)
     this.inst = def.create(this.api);
     this.res = null;
     this.ready = this.players.map((p) => p.bot);
@@ -613,7 +621,7 @@ const App = {
         : `${srcName(p.src)} <button class="btn xs" data-act="r-bench" data-k="${i}" title="Nghỉ ván này">💤</button>`;
       return `<tr><td><span class="who">${this.blobHTML(p.color, 'sm')} ${p.name}</span></td>${team}${choice}
         <td class="whoctl">${p.bot ? '🤖 ' : ''}${who}</td>
-        <td>${k(lb ? lb.move : '')}</td>
+        <td>${d.typing && !p.bot ? '<kbd>Cả bàn phím</kbd>' : k(lb ? lb.move : '')}</td>
         ${c.act ? `<td>${k(lb ? lb.act : '')}</td>` : ''}
         ${c.jump ? `<td>${k(lb ? lb.jump : '')}</td>` : ''}
         <td class="ready ${this.ready[i] ? 'yes' : 'no'}">${this.ready[i] ? '✓ Sẵn sàng' : 'Nhấn Đánh…'}</td></tr>`;
@@ -624,6 +632,9 @@ const App = {
       + (this.speedMul > 1 ? ' <span class="party-tag fast-tag">⚡ Tua nhanh ×1,3</span>' : '');
     const compact = !!(d.modes || d.playerChoices || d.options || nSeat > 2), card = document.getElementById('intro-card');
     card.classList.toggle('compact', compact);
+    // nhiều hàng lựa chọn (vd. Jigsaw: chế độ + 14 tranh + 3 tuỳ chọn) → thu nhỏ thẻ chọn; hàng nút Bắt đầu luôn dính đáy thẻ (thẻ tự cuộn)
+    const rowsN = (d.modes ? 1 : 0) + (d.variants ? Math.ceil(d.variants.items.length / 7) : 0) + (d.options ? Math.ceil(d.options.length / 2) + 1 : 0);
+    card.classList.toggle('dense', rowsN >= 5);
     // người thật đang nghỉ: vào chơi (đủ chỗ thì thay một máy)
     const canIn = nSeat < max || this.seats.some((s) => s.bot);
     const benchBtns = this.bench.map((h) => `<button class="btn small" data-act="r-in" data-s="${h}" ${canIn ? '' : 'disabled'}>▶ ${this.slots[h].name} vào chơi</button>`).join('');
@@ -661,7 +672,7 @@ const App = {
         <tr><th></th>${this.inst.teamOf ? `<th>${this.inst.teamLabel || 'Đội'}</th>` : ''}${d.playerChoices ? `<th>${d.playerChoices.label} (← →)</th>` : ''}${d.looks ? '<th>Phụ kiện (↑)</th>' : ''}<th>Ai chơi · mức máy</th><th>${c.move || 'Di chuyển'}</th>${c.act ? `<th>${c.act}</th>` : ''}${c.jump ? `<th>${c.jump}</th>` : ''}<th></th></tr>
         ${rows}
       </table>
-      <div class="row">
+      <div class="row intro-actions">
         <button class="btn" data-act="intro-back">← Đổi game</button>
         <button class="btn small" data-act="r-add" ${nSeat < max ? '' : 'disabled'}>🤖 + Thêm máy</button>
         ${benchBtns}
@@ -680,6 +691,11 @@ const App = {
     if (g.need) bits.push(`thắng ${g.need} hiệp`);
     if (g.laps) bits.push(`${g.laps} vòng`);
     if (g.qn) bits.push(`${g.qn} câu`);
+    if (g.nwords) bits.push(`${g.nwords} từ`);
+    if (g.ncards) bits.push(`${g.ncards} thẻ từ`);
+    if (g.nwaves) bits.push(`${g.nwaves} đợt thiên thạch`);
+    if (g.nsents) bits.push(`${g.nsents} câu`);
+    if (g.npieces) bits.push(`${g.npieces} mảnh`);
     if (g.goal) bits.push(`${g.goal} hộp`);
     if (g.kicks) bits.push(`${g.kicks} lượt sút mỗi đội`);
     if (g.target) bits.push(`${g.target} điểm`);
@@ -775,7 +791,7 @@ const App = {
     if (this.def && (this.def.modes || this.def.playerChoices || this.def.variants) && this.state === 'intro') this.inst = this.def.create(this.api);
     this.hideAll();
     this.state = 'countdown';
-    this.cd = 3;
+    this.cd = this.inst && this.inst.quickStart ? 0.01 : 3;   // quickStart: màn xem (Gõ Chữ – Tiến Độ) không cần đếm ngược
     this.lastCount = 4;
   },
 
@@ -917,18 +933,27 @@ const App = {
         this.goT += dt;
         const m = Input.menu();
         // tay cầm: B là nút Nhảy trong game nên chỉ Start mới tạm dừng; bàn phím: Esc / P
-        if (Input.hit('Escape') || m.start || Input.hit('KeyP')) {
+        // game gõ chữ (inst.typing): chữ P, H là phím gõ, chỉ Esc mới tạm dừng
+        const typing = !!(this.inst && this.inst.typing);
+        if (Input.hit('Escape') || m.start || (Input.hit('KeyP') && !typing)) {
           const ph = document.getElementById('pause-help');
           if (ph) ph.innerHTML = this.pauseHelpHTML();
           this.state = 'paused'; this.show('s-pause'); break;
         }
-        if (Input.hit('KeyH') && this.helpKeyFree()) {
+        if (Input.hit('KeyH') && this.helpKeyFree() && !typing) {
           this.helpOn = !this.helpOn;
           try { localStorage.setItem('tronparty.helpbar', this.helpOn ? '1' : '0'); } catch (e) { /* bỏ qua */ }
         }
         this.inst.update(dt * this.speedMul, this.gatherInputs(dt));
         this.api.parts.update(dt);
         if (this.inst.finished) {
+          // game tự có màn tổng kết (Gõ Chữ): về thẳng màn giới thiệu, hoặc chơi lại ngay
+          if (this.inst.exitTo) {
+            const to = this.inst.exitTo;
+            this.startGame(this.def, { keep: true });
+            if (to === 'replay') this.beginCountdown();
+            break;
+          }
           this.res = this.inst.results();
           this.state = 'ending'; this.endT = 1.6; this.endAge = 0;
           this.botTaunt();
@@ -974,7 +999,7 @@ const App = {
       const c = Math.ceil(this.cd), age = 1 - (this.cd - Math.floor(this.cd));
       ctx.fillStyle = 'rgba(10,5,25,0.25)'; ctx.fillRect(0, 0, W, H);
       Draw.banner(ctx, String(c), age < 1 ? age : 0, { size: 170, color: '#ffe14d' });
-    } else if (this.state === 'play' && this.goT < 0.8) {
+    } else if (this.state === 'play' && this.goT < 0.8 && !(this.inst && this.inst.quickStart)) {
       ctx.globalAlpha = 1 - this.goT / 0.8;
       Draw.banner(ctx, 'Bắt đầu!', this.goT, { size: 110, color: '#5dff9b' });
       ctx.globalAlpha = 1;

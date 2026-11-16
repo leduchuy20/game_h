@@ -1,0 +1,182 @@
+# Câu ví dụ tự soạn cho Gõ Chữ Tiếng Anh (Đua Xe Gõ Chữ, trùm Bắn Thiên Thạch).
+# Mỗi dòng: MỨC | câu tiếng Anh | bản dịch. Chỉ dùng ký tự gõ được trên bàn phím (nháy đơn thẳng ').
+A1 | I have a small dog and a big cat. | Tôi có một con chó nhỏ và một con mèo lớn.
+A1 | My mother is a teacher at a school. | Mẹ tôi là giáo viên ở một trường học.
+A1 | We eat rice and fish for dinner. | Chúng tôi ăn cơm và cá vào bữa tối.
+A1 | The sky is blue and the sun is hot. | Bầu trời xanh và mặt trời thì nóng.
+A1 | Can you open the window, please? | Bạn mở cửa sổ giúp mình được không?
+A1 | He plays football with his friends. | Cậu ấy chơi bóng đá với bạn bè.
+A1 | There are three apples on the table. | Có ba quả táo trên bàn.
+A1 | I get up at six o'clock every day. | Ngày nào tôi cũng dậy lúc sáu giờ.
+A1 | She likes to read books in the park. | Cô ấy thích đọc sách trong công viên.
+A1 | This is my new red bag. | Đây là cái túi màu đỏ mới của tôi.
+A1 | My brother is ten years old. | Anh trai tôi mười tuổi.
+A1 | Do you want a cup of tea? | Bạn có muốn một tách trà không?
+A1 | The shop opens at nine in the morning. | Cửa hàng mở cửa lúc chín giờ sáng.
+A1 | I go to school by bus. | Tôi đi học bằng xe buýt.
+A1 | It is cold today, so wear a coat. | Hôm nay trời lạnh, nên hãy mặc áo khoác.
+A1 | Our house has a small garden. | Nhà chúng tôi có một khu vườn nhỏ.
+A1 | What is your favourite colour? | Màu yêu thích của bạn là gì?
+A1 | The baby is sleeping now. | Em bé đang ngủ.
+A1 | I can swim, but I can't ride a horse. | Tôi biết bơi nhưng không biết cưỡi ngựa.
+A1 | We have English on Monday and Friday. | Chúng tôi học tiếng Anh vào thứ Hai và thứ Sáu.
+A1 | Please sit down and open your book. | Mời ngồi xuống và mở sách ra.
+A1 | My father cooks very good soup. | Bố tôi nấu súp rất ngon.
+A1 | The cat is under the bed. | Con mèo ở dưới gầm giường.
+A1 | I drink a glass of milk every morning. | Sáng nào tôi cũng uống một cốc sữa.
+A1 | Where is the bathroom? | Nhà vệ sinh ở đâu?
+A1 | They live in a big city. | Họ sống ở một thành phố lớn.
+A1 | Tom has short brown hair. | Tom có mái tóc nâu ngắn.
+A1 | I watch TV after dinner. | Tôi xem ti vi sau bữa tối.
+A1 | How much is this shirt? | Cái áo sơ mi này giá bao nhiêu?
+A1 | My birthday is in June. | Sinh nhật tôi vào tháng Sáu.
+A1 | The bus is late again today. | Hôm nay xe buýt lại đến muộn.
+A1 | We play games on Sunday. | Chúng tôi chơi trò chơi vào Chủ nhật.
+A1 | I am hungry. Let's eat. | Mình đói rồi. Đi ăn thôi.
+A1 | She has two sisters and one brother. | Cô ấy có hai chị gái và một anh trai.
+A1 | The flowers in the garden are yellow. | Những bông hoa trong vườn màu vàng.
+A1 | Close the door when you go out. | Đóng cửa khi bạn đi ra ngoài.
+A1 | My phone is on the desk. | Điện thoại của tôi ở trên bàn học.
+A1 | Is it raining outside? | Bên ngoài trời có đang mưa không?
+A1 | I like music, but I don't like dancing. | Tôi thích âm nhạc nhưng không thích nhảy.
+A1 | The children are playing in the sun. | Bọn trẻ đang chơi dưới nắng.
+A1 | We go to the beach in summer. | Chúng tôi đi biển vào mùa hè.
+A1 | Your friend is very kind. | Bạn của bạn rất tốt bụng.
+A1 | This bread is fresh and warm. | Bánh mì này còn tươi và ấm.
+A1 | I write my name on the paper. | Tôi viết tên mình lên tờ giấy.
+A1 | The dog runs fast in the field. | Con chó chạy nhanh trên cánh đồng.
+A1 | Can I use your pen? | Mình mượn bút của bạn được không?
+A1 | My room is clean and quiet. | Phòng tôi sạch sẽ và yên tĩnh.
+A1 | We are going to the zoo tomorrow. | Ngày mai chúng tôi sẽ đi sở thú.
+A1 | He works in a big hospital. | Anh ấy làm việc ở một bệnh viện lớn.
+A1 | The milk is in the fridge. | Sữa ở trong tủ lạnh.
+A1 | I have a test on Thursday. | Tôi có bài kiểm tra vào thứ Năm.
+A1 | Look at that bird in the tree! | Nhìn con chim trên cây kìa!
+A1 | My shoes are too small for me. | Đôi giày này quá nhỏ với tôi.
+A1 | She sings a song for her mother. | Cô ấy hát một bài cho mẹ nghe.
+A1 | Let's meet at the station at five. | Hẹn gặp nhau ở nhà ga lúc năm giờ nhé.
+A1 | The water in the river is cold. | Nước sông lạnh.
+A1 | I am happy to see you again. | Rất vui được gặp lại bạn.
+A1 | Our teacher gives us a lot of homework. | Cô giáo cho chúng tôi rất nhiều bài tập về nhà.
+A1 | It is late. Go to bed now. | Muộn rồi. Đi ngủ đi.
+A1 | Thank you for the nice gift. | Cảm ơn bạn vì món quà đẹp.
+A2 | I usually walk to work when the weather is nice. | Tôi thường đi bộ đi làm khi trời đẹp.
+A2 | We visited my grandparents last weekend. | Cuối tuần trước chúng tôi đã đến thăm ông bà.
+A2 | She was tired, so she went to bed early. | Cô ấy mệt nên đi ngủ sớm.
+A2 | Could you tell me the way to the museum? | Bạn có thể chỉ tôi đường đến bảo tàng không?
+A2 | I'm going to learn how to drive next year. | Năm sau tôi sẽ học lái xe.
+A2 | The train was crowded this morning. | Sáng nay tàu đông người.
+A2 | He has never been to another country. | Anh ấy chưa bao giờ ra nước ngoài.
+A2 | My sister is taller than me. | Chị tôi cao hơn tôi.
+A2 | We need to buy some vegetables for the soup. | Chúng ta cần mua ít rau để nấu súp.
+A2 | It's the best film I have ever seen. | Đó là bộ phim hay nhất tôi từng xem.
+A2 | I lost my keys, so I couldn't open the door. | Tôi làm mất chìa khoá nên không mở được cửa.
+A2 | The weather forecast says it will rain tonight. | Dự báo thời tiết nói tối nay trời sẽ mưa.
+A2 | You should drink more water every day. | Bạn nên uống nhiều nước hơn mỗi ngày.
+A2 | My cousin works as a nurse in the city. | Em họ tôi làm y tá ở thành phố.
+A2 | They were watching TV when I called. | Lúc tôi gọi thì họ đang xem ti vi.
+A2 | I'd like to book a table for two, please. | Tôi muốn đặt một bàn cho hai người.
+A2 | The museum is closed on Mondays. | Bảo tàng đóng cửa vào thứ Hai.
+A2 | He forgot to bring his umbrella. | Anh ấy quên mang ô.
+A2 | We stayed at a small hotel near the beach. | Chúng tôi ở một khách sạn nhỏ gần biển.
+A2 | How long does it take to get to the airport? | Đi đến sân bay mất bao lâu?
+A2 | I'm interested in history and old buildings. | Tôi thích lịch sử và các toà nhà cổ.
+A2 | Please turn off the lights before you leave. | Hãy tắt đèn trước khi bạn rời đi.
+A2 | The cake smells delicious. | Cái bánh thơm quá.
+A2 | My friend invited me to her party on Saturday. | Bạn tôi mời tôi đến bữa tiệc của cô ấy vào thứ Bảy.
+A2 | I don't have enough money to buy that bike. | Tôi không đủ tiền mua chiếc xe đạp đó.
+A2 | The library has thousands of books. | Thư viện có hàng nghìn cuốn sách.
+A2 | She speaks English and a little French. | Cô ấy nói tiếng Anh và một chút tiếng Pháp.
+A2 | We got lost, but a kind man helped us. | Chúng tôi bị lạc nhưng một người đàn ông tốt bụng đã giúp.
+A2 | It's dangerous to swim in this river. | Bơi ở con sông này rất nguy hiểm.
+A2 | I have lived in this town since I was a child. | Tôi sống ở thị trấn này từ khi còn nhỏ.
+A2 | The shop sells clothes for children. | Cửa hàng bán quần áo trẻ em.
+A2 | Remember to take your passport. | Nhớ mang theo hộ chiếu nhé.
+A2 | He broke his arm when he fell off his bike. | Anh ấy bị gãy tay khi ngã xe đạp.
+A2 | The concert starts at eight, so don't be late. | Buổi hoà nhạc bắt đầu lúc tám giờ, đừng đến muộn.
+A2 | My parents met at university. | Bố mẹ tôi gặp nhau ở trường đại học.
+A2 | We usually have a picnic in the spring. | Chúng tôi thường đi dã ngoại vào mùa xuân.
+A2 | I prefer tea to coffee. | Tôi thích trà hơn cà phê.
+A2 | Is there a bank near here? | Gần đây có ngân hàng nào không?
+A2 | The kitchen is the warmest room in the house. | Bếp là căn phòng ấm nhất trong nhà.
+A2 | She bought a present for her best friend. | Cô ấy mua quà cho bạn thân.
+A2 | I was born in a small village by the sea. | Tôi sinh ra ở một ngôi làng nhỏ ven biển.
+A2 | You can pay by card or in cash. | Bạn có thể trả bằng thẻ hoặc tiền mặt.
+A2 | Our flight was delayed for two hours. | Chuyến bay của chúng tôi bị hoãn hai tiếng.
+A2 | He always helps his neighbours. | Anh ấy luôn giúp đỡ hàng xóm.
+A2 | Let's take a photo in front of the castle. | Mình chụp ảnh trước lâu đài đi.
+A2 | The test was easier than I expected. | Bài kiểm tra dễ hơn tôi nghĩ.
+A2 | I'm sorry, I didn't hear what you said. | Xin lỗi, tôi không nghe thấy bạn nói gì.
+A2 | My grandfather tells funny stories. | Ông tôi kể chuyện rất vui.
+A2 | We must finish this project by Friday. | Chúng ta phải hoàn thành dự án này trước thứ Sáu.
+A2 | The street is busy at lunchtime. | Con phố đông đúc vào giờ trưa.
+A2 | I often listen to music on the way home. | Tôi hay nghe nhạc trên đường về nhà.
+A2 | He wants to become a famous singer. | Anh ấy muốn trở thành ca sĩ nổi tiếng.
+A2 | Don't forget to brush your teeth. | Đừng quên đánh răng.
+A2 | It was so hot that we stayed inside. | Trời nóng đến nỗi chúng tôi ở trong nhà.
+A2 | She is good at drawing animals. | Cô ấy vẽ động vật rất giỏi.
+A2 | Can you lend me your dictionary? | Bạn cho mình mượn từ điển được không?
+A2 | The hotel room had a beautiful view. | Phòng khách sạn có tầm nhìn rất đẹp.
+A2 | We waited for the bus for half an hour. | Chúng tôi chờ xe buýt nửa tiếng.
+A2 | I think this jacket is too expensive. | Tôi nghĩ cái áo khoác này đắt quá.
+A2 | Write down the new words in your notebook. | Hãy ghi các từ mới vào vở.
+B1 | If I had more free time, I would learn to play the guitar. | Nếu có nhiều thời gian rảnh hơn, tôi sẽ học chơi đàn ghi-ta.
+B1 | The company has decided to open a new office in Hanoi. | Công ty đã quyết định mở văn phòng mới ở Hà Nội.
+B1 | I've been studying English for three years. | Tôi đã học tiếng Anh được ba năm.
+B1 | Although it was raining, we went for a walk. | Mặc dù trời mưa, chúng tôi vẫn đi dạo.
+B1 | She apologised for arriving late to the meeting. | Cô ấy xin lỗi vì đến họp muộn.
+B1 | You'd better check the timetable before you leave. | Bạn nên xem lịch tàu trước khi đi.
+B1 | Most people agree that exercise is good for your health. | Hầu hết mọi người đồng ý rằng tập thể dục tốt cho sức khoẻ.
+B1 | The bridge was built more than a hundred years ago. | Cây cầu được xây hơn một trăm năm trước.
+B1 | I'm looking forward to hearing from you soon. | Tôi mong sớm nhận được tin của bạn.
+B1 | He managed to finish the race despite his injury. | Anh ấy vẫn chạy về đích dù bị chấn thương.
+B1 | We should reduce the amount of plastic we use. | Chúng ta nên giảm lượng nhựa mình dùng.
+B1 | Could you explain the rules of the game again? | Bạn giải thích lại luật chơi được không?
+B1 | The film was based on a true story. | Bộ phim dựa trên một câu chuyện có thật.
+B1 | If you need any help, just let me know. | Nếu cần giúp gì, cứ cho mình biết.
+B1 | She has a strong interest in protecting the environment. | Cô ấy rất quan tâm đến việc bảo vệ môi trường.
+B1 | The price of fuel has risen sharply this year. | Giá nhiên liệu đã tăng mạnh trong năm nay.
+B1 | I couldn't sleep because the neighbours were too noisy. | Tôi không ngủ được vì hàng xóm quá ồn.
+B1 | Learning a language takes time and patience. | Học một ngôn ngữ cần thời gian và sự kiên nhẫn.
+B1 | They are planning to travel around Asia next summer. | Họ đang dự định đi du lịch vòng quanh châu Á vào hè tới.
+B1 | The teacher encouraged us to ask more questions. | Thầy giáo khuyến khích chúng tôi đặt nhiều câu hỏi hơn.
+B1 | It's important to get enough sleep before an exam. | Ngủ đủ giấc trước kỳ thi là rất quan trọng.
+B1 | He was so nervous that he forgot his speech. | Anh ấy hồi hộp đến mức quên cả bài phát biểu.
+B1 | The new law will come into force next month. | Luật mới sẽ có hiệu lực vào tháng sau.
+B1 | We had to cancel the trip because of the storm. | Chúng tôi phải huỷ chuyến đi vì cơn bão.
+B1 | I wish I had studied harder at school. | Ước gì hồi đi học tôi chăm hơn.
+B1 | The museum attracts visitors from all over the world. | Bảo tàng thu hút du khách từ khắp nơi trên thế giới.
+B1 | Can you recommend a good restaurant in this area? | Bạn có thể giới thiệu một nhà hàng ngon ở khu này không?
+B1 | My phone battery runs out very quickly. | Pin điện thoại của tôi hết rất nhanh.
+B1 | She succeeded because she never gave up. | Cô ấy thành công vì chưa bao giờ bỏ cuộc.
+B1 | The results of the survey were quite surprising. | Kết quả khảo sát khá bất ngờ.
+B1 | You need to fill in this form before the interview. | Bạn cần điền mẫu đơn này trước buổi phỏng vấn.
+B1 | He suggested that we take a taxi instead. | Anh ấy gợi ý chúng ta đi taxi thay vào đó.
+B1 | Many young people prefer working from home. | Nhiều người trẻ thích làm việc tại nhà hơn.
+B1 | The volunteers helped clean up the beach. | Các tình nguyện viên đã giúp dọn sạch bãi biển.
+B1 | I'm not sure whether he will accept the offer. | Tôi không chắc anh ấy có nhận lời đề nghị không.
+B1 | Our team won the match in the last minute. | Đội chúng tôi thắng trận ở phút cuối.
+B1 | Fresh fruit is cheaper at the local market. | Hoa quả tươi ở chợ địa phương rẻ hơn.
+B1 | The doctor advised him to stop smoking. | Bác sĩ khuyên anh ấy bỏ thuốc lá.
+B1 | It took us ages to find a parking space. | Chúng tôi mất cả buổi mới tìm được chỗ đỗ xe.
+B1 | She keeps a diary to remember special moments. | Cô ấy viết nhật ký để nhớ những khoảnh khắc đặc biệt.
+B1 | The internet has changed the way we communicate. | Internet đã thay đổi cách chúng ta giao tiếp.
+B1 | I'd rather stay at home than go out tonight. | Tối nay tôi thà ở nhà còn hơn ra ngoài.
+B1 | The instructions were difficult to understand. | Phần hướng dẫn khó hiểu.
+B1 | He has been working at the same company for ten years. | Anh ấy làm ở cùng một công ty đã mười năm.
+B1 | Please make sure all the windows are locked. | Hãy chắc chắn rằng mọi cửa sổ đều đã khoá.
+B1 | We're running out of time, so let's hurry up. | Chúng ta sắp hết giờ, nhanh lên nào.
+B1 | The festival takes place every year in October. | Lễ hội diễn ra hằng năm vào tháng Mười.
+B1 | Reading in a foreign language improves your vocabulary. | Đọc bằng ngoại ngữ giúp tăng vốn từ vựng.
+B1 | My boss gave me some useful advice. | Sếp đã cho tôi vài lời khuyên hữu ích.
+B1 | The children were excited about the school trip. | Bọn trẻ háo hức về chuyến dã ngoại của trường.
+B1 | It's worth visiting the old town at night. | Phố cổ rất đáng để ghé thăm vào buổi tối.
+B1 | I didn't realise how late it was. | Tôi không nhận ra đã muộn đến thế.
+B1 | The government is trying to create more jobs. | Chính phủ đang cố gắng tạo thêm việc làm.
+B1 | She borrowed some money from her brother. | Cô ấy vay ít tiền của anh trai.
+B1 | Traffic is always heavy during the rush hour. | Giờ cao điểm lúc nào cũng tắc đường.
+B1 | He admitted that he had made a mistake. | Anh ấy thừa nhận mình đã mắc lỗi.
+B1 | Saving a little money every month is a good habit. | Tiết kiệm một ít tiền mỗi tháng là thói quen tốt.
+B1 | The hotel offers free breakfast to all guests. | Khách sạn phục vụ bữa sáng miễn phí cho mọi khách.
+B1 | We compared the prices before buying a new laptop. | Chúng tôi so sánh giá trước khi mua máy tính xách tay mới.
+B1 | Practice is the key to typing faster. | Luyện tập là chìa khoá để gõ nhanh hơn.

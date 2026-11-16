@@ -15,8 +15,23 @@ Giấy phép từng bộ quân lấy theo bảng trong `COPYING.md` của liches
 
 Khi thiếu file ảnh, game tự vẽ quân bằng ký tự (♔♕♖♗♘♙) để vẫn chơi được; Cờ Tỷ Phú thiếu tranh thì quay về emoji.
 
+## Ảnh thẻ game
+
+`assets/thumbs/*.webp` — ảnh chụp màn hình của chính Tròn Party (tự tạo bằng `tools/make-thumbs.js`), không dùng ảnh ngoài.
+
+## Kho từ tiếng Anh (Gõ Chữ Tiếng Anh)
+
+`js/games/typing_words.js` tự sinh bằng `tools/pack-words.js` từ hai bộ dữ liệu của Open Language Profiles (file gốc + điều khoản trong `tools/words-src/`):
+
+- **CEFR-J Vocabulary Profile 1.5** (mức A1–B2) — The CEFR-J Wordlist Version 1.5, compiled by Yukio Tono, Tokyo University of Foreign Studies (Tono Laboratory, TUFS) — http://www.cefr-j.org/download.html. Được dùng miễn phí cho nghiên cứu và thương mại khi ghi nguồn.
+- **Octanove Vocabulary Profile C1/C2 1.0** (mức C1–C2) — Octanove Labs (http://www.octanove.com/), giấy phép Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0).
+
+Nghĩa tiếng Việt (`tools/words-vi/*.txt`) và 180 câu ví dụ kèm bản dịch (`tools/words-vi/sentences.txt`, `window.TYPING_SENTS`) do Tròn Party tự soạn. Vì có dữ liệu Octanove nên `typing_words.js` (gồm cả phần nghĩa) phát hành theo **CC BY-SA 4.0**.
+
 ## Thư viện
 
 | File | Nội dung | Tác giả | Giấy phép |
 | --- | --- | --- | --- |
+| `js/lib/peerjs.min.js` | PeerJS 1.5.4 (WebRTC + tìm phòng qua máy chủ PeerJS miễn phí, dùng cho Chơi qua mạng) | Michelle Bu, Eric Zhang và cộng sự | MIT — xem `js/lib/peerjs.LICENSE.txt` |
+| `fonts/` | Font Baloo 2 (Tròn Party), Lexend + Be Vietnam Pro (Phòng tập não bộ) — bản woff2 của Fontsource 5, chỉ bộ chữ latin, latin-ext, vietnamese; tạo bằng `tools/pack-fonts.js` | The Baloo 2 Project Authors (Ek Type), The Lexend Project Authors, The Be Vietnam Pro Project Authors | SIL Open Font License 1.1 — xem `fonts/<font>/LICENSE` |
 | `js/lib/three.min.js` | Three.js r159 (bản `<script>` thường, dùng cho Cờ Cá Ngựa 3D và bàn 3D Cờ Tỷ Phú) | Three.js Authors | MIT — xem `js/lib/three.LICENSE.txt` |

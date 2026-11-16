@@ -69,6 +69,8 @@ const KB_SCHEMES = [
     labels: { move: '8 4 5 6 (numpad)', act: '7', jump: '9' } },
 ];
 const PAD_LABELS = { move: 'Cần trái / D-pad', act: 'A', jump: 'B' };
+// người chơi ở máy khác (chơi qua mạng, js/net.js): phím trên trang online.html
+const NET_LABELS = { move: 'WASD / mũi tên', act: 'Space', jump: 'K' };
 
 const GAME_KEYS = new Set(KB_SCHEMES.flatMap((s) => Object.values(s.keys))
   .concat(['Space', 'Enter', 'Escape', 'KeyP', 'Tab', 'Backspace']));
@@ -146,6 +148,7 @@ const Input = {
   },
 
   poll() {
+    this.netPoll();
     this.just = this.queue;
     this.queue = new Set();
     let gps = [];
@@ -165,6 +168,12 @@ const Input = {
     }
   },
 
+  /* ---------- người chơi ở máy khác (net.js gửi trạng thái phím vào đây) ----------
+     trạng thái { mx, my, act, jump, na, nj }: na/nj = số lần đã bấm Đánh/Nhảy (đếm dồn) → bấm nhanh hơn 1 khung vẫn không lọt */
+  net: {},
+  netSet(id, st) { const e = this.net[id] || (this.net[id] = { cur: null, snap: null, last: null }); e.cur = st; },
+  netDrop(id) { delete this.net[id]; },
+  netPoll() { for (const id in this.net) { const e = this.net[id]; e.last = e.snap; e.snap = e.cur ? Object.assign({}, e.cur) : null; } },
   key(c) { return this.down.has(c); },
   hit(c) { return this.just.has(c); },
   padHit(i, btn) { const p = this.pads[i]; return !!(p && p.connected && p.b[btn] && !p.pb[btn]); },
@@ -192,6 +201,12 @@ const Input = {
       o.my = (this.key(k.down) ? 1 : 0) - (this.key(k.up) ? 1 : 0);
       o.act = this.key(k.act); o.jump = this.key(k.jump);
       o.actP = this.hit(k.act); o.jumpP = this.hit(k.jump);
+    } else if (src.type === 'net') {
+      const e = this.net[src.id], c = e && e.snap, l = (e && e.last) || { na: 0, nj: 0 };
+      if (!c) return o;
+      o.mx = U.clamp(+c.mx || 0, -1, 1); o.my = U.clamp(+c.my || 0, -1, 1);
+      o.act = !!c.act; o.jump = !!c.jump;
+      o.actP = (c.na | 0) !== (l.na | 0); o.jumpP = (c.nj | 0) !== (l.nj | 0);
     } else if (src.type === 'pad') {
       const p = this.pads[src.index];
       if (!p || !p.connected) return o;
@@ -234,10 +249,11 @@ const Input = {
 
 function srcLabels(src) {
   if (!src) return null;
-  return src.type === 'kb' ? KB_SCHEMES[src.scheme].labels : PAD_LABELS;
+  return src.type === 'kb' ? KB_SCHEMES[src.scheme].labels : src.type === 'net' ? NET_LABELS : PAD_LABELS;
 }
 function srcName(src) {
   if (!src) return 'Máy';
+  if (src.type === 'net') return `Máy khác${src.off ? ' (mất kết nối)' : ''}`;
   return src.type === 'kb' ? KB_SCHEMES[src.scheme].name : `Tay cầm ${src.index + 1}`;
 }
 

@@ -32,11 +32,11 @@ const URL = 'file://' + path.join(ROOT, 'index.html').replace(/\\/g, '/');
     const out = [];
     const games = Party.games.filter((g) => !only.length || only.includes(g.id));
     for (const level of ['easy', 'hard']) {
-      for (const n of [2, 4]) {
+      for (const n of [1, 2, 4]) {   // 1 = game một người (Gõ Chữ)
         // toàn máy cùng mức (đội hình đưa thẳng vào startGame — mỗi máy có thể một mức riêng)
         const seats = Array.from({ length: n }, () => ({ bot: true, level }));
         for (const def of games) {
-          if (n < (def.minPlayers || 2) || n > (def.maxPlayers || 4)) continue;
+          if (n < (def.minPlayers || 2) || n > (def.maxPlayers || 4) || (n === 1 && def.maxPlayers !== 1)) continue;
           for (const mode of (def.modes ? def.modes.map((m) => m.id) : [null])) {
           if (mode) App.gameMode[def.id] = mode;
           const t0 = performance.now();
